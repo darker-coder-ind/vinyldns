@@ -255,6 +255,63 @@ class MySqlBatchChangeRepository
       }
     }
 
+  def getBatchChangeCount(
+      userId: Option[String],
+      userName: Option[String] = None,
+      dateTimeStartRange: Option[String] = None,
+      dateTimeEndRange: Option[String] = None,
+      approvalStatus: Option[BatchChangeApprovalStatus] = None
+  ): IO[BatchChangeCount] =
+    monitor("repo.BatchChangeJDBC.getBatchChangeCount") {
+      IO {
+        DB.readOnly { implicit s =>
+          val uid   = userId.map(u => s"user_id = '$u'")
+          val uname = userName.map(n => s"user_name = '$n'")
+          val as    = approvalStatus.map(a => s"approval_status = '${fromApprovalStatus(a)}'")
+          val dtRange = if (dateTimeStartRange.isDefined && dateTimeEndRange.isDefined)
+            Some(s"(created_time >= '${dateTimeStartRange.get}' AND created_time <= '${dateTimeEndRange.get}')")
+          else None
+
+          val extraConds = uid ++ uname ++ as ++ dtRange
+          val extraWhere = if (extraConds.nonEmpty) " AND " + extraConds.mkString(" AND ") else ""
+
+          def countSql(status: String) =
+            s"SELECT '$status' AS batch_status, COUNT(*) AS cnt FROM batch_change WHERE batch_status = '$status'$extraWhere"
+
+          val statuses = List("Complete", "Failed", "PartialFailure", "Rejected",
+                              "Cancelled", "PendingReview", "Scheduled", "PendingProcessing")
+          val unionQuery = statuses.map(countSql).mkString("\nUNION ALL\n")
+
+          val counts = SQL(unionQuery)
+            .map { res => res.string("batch_status") -> res.int("cnt") }
+            .list()
+            .apply()
+            .toMap
+
+          val complete          = counts.getOrElse("Complete", 0)
+          val failed            = counts.getOrElse("Failed", 0)
+          val partialFailure    = counts.getOrElse("PartialFailure", 0)
+          val rejected          = counts.getOrElse("Rejected", 0)
+          val cancelled         = counts.getOrElse("Cancelled", 0)
+          val pendingReview     = counts.getOrElse("PendingReview", 0)
+          val scheduled         = counts.getOrElse("Scheduled", 0)
+          val pendingProcessing = counts.getOrElse("PendingProcessing", 0)
+          BatchChangeCount(
+            total             = complete + failed + partialFailure + rejected +
+                                cancelled + pendingReview + scheduled + pendingProcessing,
+            complete          = complete,
+            failed            = failed,
+            partialFailure    = partialFailure,
+            rejected          = rejected,
+            cancelled         = cancelled,
+            pendingReview     = pendingReview,
+            scheduled         = scheduled,
+            pendingProcessing = pendingProcessing
+          )
+        }
+      }
+    }
+
   def getBatchChangeSummaries(
       userId: Option[String],
       userName: Option[String] = None,
