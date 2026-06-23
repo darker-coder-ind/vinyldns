@@ -622,6 +622,28 @@ class BatchChangeService(
     } yield listWithGroupNames
   }
 
+  def getBatchChangeCount(
+      auth: AuthPrincipal,
+      userName: Option[String] = None,
+      dateTimeStartRange: Option[String] = None,
+      dateTimeEndRange: Option[String] = None,
+      ignoreAccess: Boolean = false,
+      approvalStatus: Option[BatchChangeApprovalStatus] = None
+  ): BatchResult[BatchChangeCount] = {
+    val userId = if (ignoreAccess && auth.isSystemAdmin) None else Some(auth.userId)
+    val submitterUserName =
+      if (userName.isDefined && userName.get.isEmpty) None else userName
+    val startDateTime =
+      if (dateTimeStartRange.isDefined && dateTimeStartRange.get.isEmpty) None
+      else dateTimeStartRange
+    val endDateTime =
+      if (dateTimeEndRange.isDefined && dateTimeEndRange.get.isEmpty) None
+      else dateTimeEndRange
+    batchChangeRepo
+      .getBatchChangeCount(userId, submitterUserName, startDateTime, endDateTime, approvalStatus)
+      .toBatchResult
+  }
+
   def rejectBatchChange(
       batchChange: BatchChange,
       reviewComment: Option[String],
