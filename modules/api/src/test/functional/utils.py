@@ -1,4 +1,5 @@
 import json
+import time
 import traceback
 import uuid
 
@@ -151,12 +152,15 @@ def dns_add(zone, record_name, ttl, record_type, rdata):
     return dns_do_command(zone, record_name, record_type, "add", ttl, rdata)
 
 
-def dns_resolve(zone, record_name, record_type):
+def dns_resolve(zone, record_name, record_type, retries=10, retry_delay=2):
     """
-    Performs a dns query to find the record name and type against the zone
-    :param zone:  a populated zone model
+    Performs a dns query to find the record name and type against the zone.
+    Retries on transient DNS errors (TRY_AGAIN, NOTAUTH, NoNameservers) before giving up.
+    :param zone:         a populated zone model
     :param record_name:  the name of the record to lookup
     :param record_type:  the type of record to lookup
+    :param retries:      number of retry attempts on transient errors (default 10)
+    :param retry_delay:  seconds to wait between retries (default 2)
     :return: An array of dictionaries, each dict containing fields rdata, type, name, ttl, dclass
     """
     vinyldns_resolver = dns.resolver.Resolver(configure=False)
@@ -172,14 +176,27 @@ def dns_resolve(zone, record_name, record_type):
         # assert that we are looking up the zone name / @ symbol
         fqdn = vinyldns_resolver.domain
 
-    try:
-        answers = vinyldns_resolver.resolve(fqdn, record_type)
-    except NXDOMAIN:
-        print("query returned NXDOMAIN")
-        answers = []
-    except dns.resolver.NoAnswer:
-        print("query returned NoAnswer")
-        answers = []
+    attempts_left = retries + 1
+    while attempts_left > 0:
+        attempts_left -= 1
+        try:
+            answers = vinyldns_resolver.resolve(fqdn, record_type)
+            break
+        except NXDOMAIN:
+            print("query returned NXDOMAIN")
+            answers = []
+            break
+        except dns.resolver.NoAnswer:
+            print("query returned NoAnswer")
+            answers = []
+            break
+        except (dns.resolver.NoNameservers, dns.exception.Timeout) as e:
+            if attempts_left <= 0:
+                print(f"DNS lookup failed after {retries + 1} attempts: {e}")
+                answers = []
+                break
+            print(f"Transient DNS error ({type(e).__name__}: {e}); retrying in {retry_delay}s ({attempts_left} attempts left)...")
+            time.sleep(retry_delay)
 
     if answers:
         # dns python is goofy, looks like we have to parse text
@@ -191,6 +208,32 @@ def dns_resolve(zone, record_name, record_type):
         return [parse_record(x) for x in records]
     else:
         return []
+
+
+def wait_for_dns(zone, record_name, record_type, expected_rdata, retries=12, retry_delay=2):
+    """
+    Waits until a DNS record resolves to the expected rdata value, retrying on empty or
+    transient responses. Fails the test if the record does not appear within the retry budget.
+    :param zone:          a populated zone model
+    :param record_name:   the name of the record to wait for
+    :param record_type:   the DNS record type (e.g. "A", "CNAME")
+    :param expected_rdata: the rdata string that must appear in the resolved records
+    :param retries:       maximum number of retries (default 12)
+    :param retry_delay:   seconds between retries (default 2)
+    """
+    for attempt in range(retries + 1):
+        results = dns_resolve(zone, record_name, record_type)
+        rdatas = rdata(results)
+        if expected_rdata in rdatas:
+            return
+        if attempt < retries:
+            print(f"DNS record {record_name}/{record_type} not yet resolved to '{expected_rdata}' "
+                  f"(got {rdatas}); retrying in {retry_delay}s ({retries - attempt} attempts left)...")
+            time.sleep(retry_delay)
+
+    results = dns_resolve(zone, record_name, record_type)
+    assert_that(rdata(results), has_item(expected_rdata),
+                f"DNS record {record_name}/{record_type} did not resolve to '{expected_rdata}' after {retries} retries")
 
 
 def parse_record(record_string):
