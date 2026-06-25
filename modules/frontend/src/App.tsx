@@ -34,7 +34,6 @@ import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { RecordsPage } from "./pages/RecordsPage";
 import { DnsChangesPage } from "./pages/DnsChangesPage";
 import { DnsChangeDetailPage } from "./pages/DnsChangeDetailPage";
-import { AdminPage } from "./pages/AdminPage";
 
 // Bootstrap CSS + icons
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -135,16 +134,6 @@ export function App() {
                 </AppLayout>
               }
             />
-
-            <Route
-              path="/admin"
-              element={
-                <AppLayout>
-                  <AdminPage />
-                </AppLayout>
-              }
-            />
-
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/zones" replace />} />
             <Route path="/index" element={<Navigate to="/zones" replace />} />
