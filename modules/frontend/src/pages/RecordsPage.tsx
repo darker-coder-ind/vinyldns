@@ -22,7 +22,7 @@ import React, {
   useMemo,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { RecordsTable } from "../components/records/RecordsTable";
+import { RecordsSearchTable } from "../components/records/RecordsSearchTable";
 import { Pagination } from "../components/common/Pagination";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { useRecords } from "../hooks/useRecords";
@@ -1168,7 +1168,7 @@ export function RecordsPage() {
               />
             </div>
           )}
-          <RecordsTable
+          <RecordsSearchTable
             records={displayedRecords.map((rec) => {
               // For non-shared zones the Angular portal resolves ownerGroup from
               // the zone's adminGroup via GET /zones/:id/details. We replicate

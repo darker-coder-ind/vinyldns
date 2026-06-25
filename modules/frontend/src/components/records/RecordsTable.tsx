@@ -14,669 +14,487 @@
  * limitations under the License.
  */
 
-import React, { useState } from "react";
-import { copyToClipboard } from "../../utils/dateUtils";
+import React, { useState, useRef, useEffect } from 'react';
+import type { RecordSet, RecordData } from '../../types/record';
 
-// Visual sort indicator shared across table headers that support sort toggling.
-// `null` renders a neutral double-arrow to signal the column is sortable.
-type SortDir = "asc" | "desc" | null;
-function SortArrow({ dir }: { dir: SortDir }) {
-  if (dir === "asc")
-    return (
-      <i
-        className="bi bi-arrow-up"
-        style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
-      />
-    );
-  if (dir === "desc")
-    return (
-      <i
-        className="bi bi-arrow-down"
-        style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
-      />
-    );
+// ── NS / PTR expand-collapse chip list ───────────────────────────────────────
+const SHOW_LIMIT = 3;
+function MultiValueChips({ values }: { values: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? values : values.slice(0, SHOW_LIMIT);
+  const extra = values.length - SHOW_LIMIT;
   return (
-    <i
-      className="bi bi-arrow-down-up"
-      style={{
-        fontSize: "0.65rem",
-        color: "#898a8b",
-        marginLeft: 3,
-        opacity: 0.7,
-      }}
-    />
-  );
-}
-
-// Converts API status strings to the appropriate badge CSS modifier.
-export function recStatusClass(status: string): string {
-  if (status === "Active") return "vds-status-badge--success";
-  if (status === "PendingDelete") return "vds-status-badge--danger";
-  if (status === "PendingUpdate") return "vds-status-badge--warning";
-  if (status === "Pending") return "vds-status-badge--warning";
-  if (status === "Inactive") return "vds-status-badge--secondary";
-  return "vds-status-badge--secondary";
-}
-export function recStatusLabel(status: string): string {
-  if (status === "PendingDelete") return "Pending Delete";
-  if (status === "PendingUpdate") return "Pending Update";
-  return status;
-}
-
-/** FQDN text span — wraps long domain names instead of truncating. */
-function FqdnTooltipSpan({ fqdn }: { fqdn: string }) {
-  return (
-    <span
-      className="small fw-semibold vds-table-primary"
-      style={{ wordBreak: "break-all" }}
-    >
-      {fqdn}
-    </span>
-  );
-}
-
-/**
- * Single key-value row used inside multi-field record cells (SOA, MX, SRV, etc.)
- * so each field is on its own line rather than one long pipe-separated string.
- */
-function KVRow({ label, value }: { label: string; value: unknown }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "baseline",
-        gap: 4,
-        lineHeight: 1.5,
-        padding: "1px 0",
-      }}
-    >
-      <span
-        style={{
-          fontSize: "0.64rem",
-          fontWeight: 700,
-          color: "#1e5fa8",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          minWidth: 58,
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{ fontSize: "0.8rem", fontWeight: 500, wordBreak: "break-word" }}
-      >
-        {String(value ?? "—")}
-      </span>
+    <div className="d-flex flex-column gap-1">
+      {visible.map((val, i) => (
+        <span key={i} className="vds-record-data-chip vds-record-data-chip--wrap">
+          <i className="bi bi-dot" style={{ fontSize: '0.65rem', marginRight: 2, opacity: 0.5 }} />
+          {val}
+        </span>
+      ))}
+      {values.length > SHOW_LIMIT && (
+        <button
+          type="button"
+          className="vds-record-data-more"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded
+            ? <><i className="bi bi-chevron-up" style={{ fontSize: '0.65rem', marginRight: 3 }} />Show fewer</>
+            : <><i className="bi bi-chevron-down" style={{ fontSize: '0.65rem', marginRight: 3 }} />+{extra} more</>}
+        </button>
+      )}
     </div>
   );
 }
 
-/**
- * Renders a single DNS record value in a type-aware, human-readable format.
- * Simple types (A, PTR, CNAME, NS, TXT) show a single value inline.
- * Multi-field types (SOA, MX, SRV, DS, NAPTR, SSHFP) use stacked KVRow pairs
- * so the cell stays readable without an overflowing pipe-separated wall of text.
- */
-function renderRecordValue(
-  type: string,
-  r: Record<string, unknown>,
-): React.ReactNode {
-  switch (type) {
-    case "A":
-    case "AAAA":
-      return <span>{String(r.address ?? "—")}</span>;
-    case "CNAME":
-      return <span>{String(r.cname ?? "—")}</span>;
-    case "PTR":
-      return <span>{String(r.ptrdname ?? "—")}</span>;
-    case "TXT":
-    case "SPF":
-      return <span>{String(r.text ?? "—")}</span>;
-    case "NS":
-      return <span>{String(r.nsdname ?? "—")}</span>;
-    case "MX":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Pref" value={r.preference} />
-          <KVRow label="Exchange" value={r.exchange} />
-        </div>
-      );
-    case "SRV":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Priority" value={r.priority} />
-          <KVRow label="Weight" value={r.weight} />
-          <KVRow label="Port" value={r.port} />
-          <KVRow label="Target" value={r.target} />
-        </div>
-      );
-    case "NAPTR":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Order" value={r.order} />
-          <KVRow label="Pref" value={r.preference} />
-          <KVRow label="Flags" value={r.flags} />
-          <KVRow label="Service" value={r.service} />
-          <KVRow label="Regexp" value={r.regexp} />
-          <KVRow label="Replace" value={r.replacement} />
-        </div>
-      );
-    case "DS":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Keytag" value={r.keytag} />
-          <KVRow label="Algorithm" value={r.algorithm} />
-          <KVRow label="Digest Type" value={r.digestType ?? r.digesttype} />
-          <KVRow label="Digest" value={r.digest} />
-        </div>
-      );
-    case "SOA":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Mname" value={r.mname} />
-          <KVRow label="Rname" value={r.rname} />
-          <KVRow label="Serial" value={r.serial} />
-          <KVRow label="Refresh" value={r.refresh} />
-          <KVRow label="Retry" value={r.retry} />
-          <KVRow label="Expire" value={r.expire} />
-          <KVRow label="Min" value={r.minimum} />
-        </div>
-      );
-    case "SSHFP":
-      return (
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,95,168,0.06), rgba(13,27,62,0.03))",
-            border: "1px solid rgba(30,95,168,0.13)",
-            borderRadius: 6,
-            padding: "3px 8px",
-          }}
-        >
-          <KVRow label="Algorithm" value={r.algorithm} />
-          <KVRow label="Type" value={r.type} />
-          <KVRow label="Fingerprint" value={r.fingerprint} />
-        </div>
-      );
-    default: {
-      const val = (r.address ??
-        r.cname ??
-        r.ptrdname ??
-        r.text ??
-        r.nsdname ??
-        r.exchange ??
-        r.target ??
-        r.value) as unknown;
-      return <span>{String(val ?? "—")}</span>;
-    }
-  }
+export interface RecordsTableProps {
+  records: RecordSet[];
+  onEdit?: (record: RecordSet) => void;
+  onDelete?: (record: RecordSet) => void;
+  /** Whether the parent zone is shared */
+  isSharedZone?: boolean;
+  /** Current user is a super-user */
+  isSuper?: boolean;
+  /** Current user is a support user */
+  isSupport?: boolean;
+  /** Current user is a zone admin */
+  isZoneAdmin?: boolean;
+  /** IDs of groups the current user belongs to */
+  userGroupIds?: string[];
+  /** Called when user wants to claim / request ownership of a record */
+  onRequestOwnership?: (record: RecordSet) => void;
+  /** Called when user wants to cancel their pending ownership request */
+  onCloseOwnershipRequest?: (record: RecordSet) => void;
+  /** Called when owner-group member approves a transfer request */
+  onApproveOwnership?: (record: RecordSet) => void;
+  /** Called when owner-group member rejects a transfer request */
+  onRejectOwnership?: (record: RecordSet) => void;
 }
 
-/** Maximum number of record values shown before the "Show more…" link appears. */
-const SHOW_MAX = 4;
+const statusClass = (status: string) => {
+  if (status === 'Active')        return 'vds-zone-status-badge--active';
+  if (status === 'Inactive')      return 'vds-zone-status-badge--deleted';
+  if (status === 'PendingDelete') return 'vds-zone-status-badge--deleted';
+  return 'vds-zone-status-badge--pending';
+};
 
-/**
- * Expandable record-data cell for a single record set row.
- *
- * Renders up to SHOW_MAX values by default and provides a "Show more…" /
- * "Show fewer…" toggle matching the legacy AngularJS portal behavior.
- * Each value is rendered via `renderRecordValue` which handles type-specific
- * field names for all supported DNS record types including DS, SOA, SPF, and SSHFP.
- */
-function RecordDataCell({ rec }: { rec: any }) {
-  const [expanded, setExpanded] = useState(false);
-  const records: Record<string, unknown>[] = rec.records ?? [];
-
-  if (records.length === 0) {
-    return <span className="vds-table-secondary small">{rec.data ?? "—"}</span>;
+function formatRecordData(r: RecordSet): React.ReactNode {
+  if (!r.records?.length) return <span className="text-muted">—</span>;
+  
+  // NS / PTR: stacked chips with expand/collapse after 3
+  if (r.type === 'NS' || r.type === 'PTR') {
+    const key = r.type === 'NS' ? 'nsdname' : 'ptrdname';
+    const all = r.records.map((d: RecordData) => (d as Record<string, string>)[key] ?? '');
+    return <MultiValueChips values={all} />;
   }
 
-  const visibleRecords = expanded ? records : records.slice(0, SHOW_MAX);
-  const hasMore = records.length > SHOW_MAX;
+  // SOA: all 7 fields in 4 chips
+  if (r.type === 'SOA' && r.records[0]) {
+    const d = r.records[0];
+    return (
+      <div className="d-flex flex-column gap-1">
+        <span className="vds-record-data-chip vds-record-data-chip--wrap">
+          <i className="bi bi-server" style={{ fontSize: '0.65rem', marginRight: 3, opacity: 0.6 }} />
+          {d.mname}
+        </span>
+        <span className="vds-record-data-chip vds-record-data-chip--wrap">
+          <i className="bi bi-envelope" style={{ fontSize: '0.65rem', marginRight: 3, opacity: 0.6 }} />
+          {d.rname}
+        </span>
+        <span className="vds-record-data-chip vds-record-data-chip--dim">
+          serial {d.serial} · refresh {d.refresh} · retry {d.retry}
+        </span>
+        <span className="vds-record-data-chip vds-record-data-chip--dim">
+          expire {d.expire} · minimum {d.minimum}
+        </span>
+      </div>
+    );
+  }
+
+  const items = r.records.slice(0, 3).map((d: RecordData, i: number) => {
+    let text = '';
+    switch (r.type) {
+      case 'A':
+      case 'AAAA':   text = d.address ?? ''; break;
+      case 'CNAME':  text = d.cname ?? ''; break;
+      case 'MX':     text = `${d.preference ?? 10} ${d.exchange ?? ''}`; break;
+      case 'TXT':
+      case 'SPF':    text = `"${d.text ?? ''}"`; break;
+      case 'SRV':    text = `${d.priority} ${d.weight} ${d.port} ${d.target}`; break;
+      case 'CAA':    text = `${d.flags} ${d.tag} "${d.value}"`; break;
+      case 'SSHFP':  text = `alg ${d.algorithm} fp ${String(d.fingerprint ?? '').slice(0, 12)}…`; break;
+      case 'DS':     text = `tag ${d.keytag} alg ${d.algorithm} digest ${d.digesttype}`; break;
+      case 'NAPTR':  text = `${d.order} ${d.preference} ${d.flags} ${d.service}`; break;
+      default:       text = JSON.stringify(d).slice(0, 40);
+    }
+    return <span key={i} className="vds-record-data-chip vds-record-data-chip--wrap">{text}</span>;
+  });
 
   return (
-    <ul className="mb-0 ps-3 small" style={{ listStyle: "disc", margin: 0 }}>
-      {visibleRecords.map((r, i) => (
-        <li key={i} style={{ overflowWrap: "break-word" }}>
-          {renderRecordValue(String(rec.type ?? ""), r)}
-        </li>
-      ))}
-      {hasMore && !expanded && (
-        <li style={{ listStyle: "none" }}>
-          <button
-            type="button"
-            className="btn btn-link btn-sm p-0"
-            style={{ fontSize: "0.78rem" }}
-            onClick={() => setExpanded(true)}
-          >
-            Show more… (+{records.length - SHOW_MAX})
-          </button>
-        </li>
+    <div className="d-flex flex-wrap gap-1 align-items-center">
+      {items}
+      {r.records.length > 3 && (
+        <span className="vds-record-data-more"
+          title={r.records.slice(3).map((d: RecordData) => JSON.stringify(d)).join('\n')}
+        >+{r.records.length - 3} more</span>
       )}
-      {hasMore && expanded && (
-        <li style={{ listStyle: "none" }}>
-          <button
-            type="button"
-            className="btn btn-link btn-sm p-0"
-            style={{ fontSize: "0.78rem" }}
-            onClick={() => setExpanded(false)}
-          >
-            Show fewer…
-          </button>
-        </li>
-      )}
-    </ul>
+    </div>
   );
 }
 
-/**
- * Produces a compact plain-text summary of the first record value for use as
- * the tooltip title on the record data cell. Only the first value is included
- * so the tooltip remains readable; the full list is available via expansion.
- */
-export function summarizeRecordData(rec: any): string {
-  const records: Record<string, unknown>[] = rec.records ?? [];
-  if (records.length === 0) return String(rec.data ?? "—");
-  const first = records[0];
-  const type = String(rec.type ?? "");
-  let val: unknown;
-  switch (type) {
-    case "A":
-    case "AAAA":
-      val = first.address;
-      break;
-    case "CNAME":
-      val = first.cname;
-      break;
-    case "PTR":
-      val = first.ptrdname;
-      break;
-    case "TXT":
-    case "SPF":
-      val = first.text;
-      break;
-    case "NS":
-      val = first.nsdname;
-      break;
-    case "MX":
-      val = `Pref: ${String(first.preference ?? "")} Exchange: ${String(first.exchange ?? "")}`;
-      break;
-    case "SRV":
-      val = `${String(first.priority ?? "")} ${String(first.weight ?? "")} ${String(first.port ?? "")} ${String(first.target ?? "")}`;
-      break;
-    case "DS":
-      val = `Keytag: ${String(first.keytag ?? "")}`;
-      break;
-    case "SOA":
-      val = `Mname: ${String(first.mname ?? "")}`;
-      break;
-    case "SSHFP":
-      val = `${String(first.algorithm ?? "")} ${String(first.type ?? "")} ${String(first.fingerprint ?? "")}`;
-      break;
-    default:
-      val =
-        first.address ??
-        first.cname ??
-        first.ptrdname ??
-        first.text ??
-        first.nsdname ??
-        first.exchange ??
-        first.target ??
-        first.value;
+const OWNERSHIP_STATUS_META: Record<string, { cls: string; icon: string; label: string }> = {
+  AutoApproved:     { cls: 'vds-ownership-badge--approved',  icon: 'bi-check-circle-fill',      label: 'Auto Approved'  },
+  ManuallyApproved: { cls: 'vds-ownership-badge--approved',  icon: 'bi-check-circle-fill',      label: 'Approved'       },
+  ManuallyRejected: { cls: 'vds-ownership-badge--rejected',  icon: 'bi-x-circle-fill',          label: 'Rejected'       },
+  Requested:        { cls: 'vds-ownership-badge--requested', icon: 'bi-arrow-right-circle-fill', label: 'Requested'      },
+  PendingReview:    { cls: 'vds-ownership-badge--pending',   icon: 'bi-hourglass-split',        label: 'Pending Review' },
+  Cancelled:        { cls: 'vds-ownership-badge--cancelled', icon: 'bi-ban',                   label: 'Cancelled'      },
+};
+
+function OwnershipStatusBadge({ status }: { status?: string }) {
+  if (!status || status === 'None' || status === 'AutoApproved') {
+    return <span className="vds-ownership-badge vds-ownership-badge--none">—</span>;
   }
-  return records.length > 1
-    ? `${String(val ?? "")} (+${records.length - 1} more)`
-    : String(val ?? "—");
+  const meta = OWNERSHIP_STATUS_META[status];
+  if (!meta) return <span className="vds-ownership-badge vds-ownership-badge--none">{status}</span>;
+  return (
+    <span className={`vds-ownership-badge ${meta.cls}`}>
+      <i className={`bi ${meta.icon} me-1`} style={{ fontSize: '0.7rem' }} />
+      {meta.label}
+    </span>
+  );
 }
 
-/**
- * @param records        - Pre-fetched (and optionally client-filtered) record sets.
- * @param onEdit         - When provided, renders an Edit action button per row.
- *                         Omit for read-only views (e.g. Global Search).
- * @param onDelete       - When provided, renders a Delete action button per row.
- * @param onViewHistory  - When provided, renders a History action button that
- *                         opens the RecordHistoryModal for the selected record.
- * @param showZone       - Toggles the Zone column; useful when the table is
- *                         already scoped to a single zone.
- * @param showOwnerGroup - Toggles the Owner Group column; not always relevant
- *                         in the global search context.
- * @param nameSort       - Current API sort direction ("ASC" | "DESC" | "").
- * @param onToggleSort   - Callback to flip the sort; clicking the FQDN header
- *                         cycles between ascending and descending.
- */
-interface RecordsTableProps {
-  records: any[];
-  onEdit?: (record: any) => void;
-  onDelete?: (record: any) => void;
-  onViewHistory?: (record: any) => void;
-  showZone?: boolean;
-  showOwnerGroup?: boolean;
-  nameSort?: string;
-  onToggleSort?: (sort: string) => void;
+function OwnerGroupCell({ record }: { record: RecordSet }) {
+  if (!record.ownerGroupId) {
+    return (
+      <span className="vds-unassigned-owner">
+        <i className="bi bi-dash-circle me-1" />
+        Unassigned
+      </span>
+    );
+  }
+  return (
+    <span className="vds-owner-group-chip">
+      <i className="bi bi-people-fill me-1" />
+      {record.ownerGroupName ?? `${record.ownerGroupId.slice(0, 8)}…`}
+    </span>
+  );
 }
 
-/**
- * Generates a two-character avatar initials string from an FQDN for the row
- * avatar badge. Splits on common DNS delimiters (dot, hyphen, underscore) and
- * takes the first character of the first two segments. Falls back to the raw
- * FQDN prefix if splitting yields empty strings (e.g. single-label names).
- */
-const fqdnInitials = (fqdn: string): string =>
-  fqdn
-    .replace(/\.$/, "")
-    .split(/[.\-_]+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || fqdn.slice(0, 2).toUpperCase();
+type OwnershipCapability =
+  | 'CLAIM'          
+  | 'REQUEST'        
+  | 'REQUESTOR'      
+  | 'APPROVER'      
+  | 'ADMIN_APPROVER' 
+  | 'PENDING'       
+  | 'NONE';          
 
-const COPY_KEYFRAMES = `
-  @keyframes vdsCopiedCheck {
-    0%   { opacity: 0; transform: scale(0.4) rotate(-15deg); }
-    60%  { transform: scale(1.3) rotate(5deg); }
-    80%  { transform: scale(0.9) rotate(-2deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+function resolveOwnershipCapability(
+  record: RecordSet,
+  opts: { isSuper: boolean; isSupport: boolean; isZoneAdmin: boolean; userGroupIds: string[] },
+): OwnershipCapability {
+  const { isSuper, isSupport, isZoneAdmin, userGroupIds } = opts;
+  const status = record.recordSetGroupChange?.ownershipTransferStatus ?? 'None';
+
+  if (!record.ownerGroupId) return 'CLAIM';
+
+  const isOwner = userGroupIds.includes(record.ownerGroupId);
+  const isRequestor = Boolean(
+    record.recordSetGroupChange?.requestedOwnerGroupId &&
+    userGroupIds.includes(record.recordSetGroupChange.requestedOwnerGroupId)
+  );
+
+  if (status === 'PendingReview') {
+    // Super / support always get full control — checked before requestor/owner
+    if (isSuper || isSupport) return 'ADMIN_APPROVER';
+    // Requestor (non-super): hourglass + cancel only
+    if (isRequestor) return 'REQUESTOR';
+    // Current owner (not requestor): approve + reject
+    if (isOwner) return 'APPROVER';
+    // Zone admin (not requestor, not owner): approve + reject + cancel
+    if (isZoneAdmin) return 'ADMIN_APPROVER';
+    return 'PENDING';
   }
-`;
+
+  const hasNonOwnerGroup = userGroupIds.some((gid) => gid !== record.ownerGroupId);
+  if (isOwner && !hasNonOwnerGroup && !isSuper && !isSupport) return 'NONE';
+  return 'REQUEST';
+}
+
+function ZoneTypePill({ isSharedZone }: { isSharedZone: boolean }) {
+  return (
+    <span className={`vds-records-zone-pill ${isSharedZone ? 'vds-records-zone-pill--shared' : 'vds-records-zone-pill--private'}`}>
+      <i className={`bi ${isSharedZone ? 'bi-share-fill' : 'bi-lock-fill'} me-1`} style={{ fontSize: '0.62rem' }} />
+      {isSharedZone ? 'Shared Zone' : 'Private Zone'}
+    </span>
+  );
+}
+
+interface OwnershipActionsDropdownProps {
+  canCancel: boolean;  
+  isPendingOnly?: boolean;  onApprove?: () => void;
+  onReject?: () => void;
+  onCancel?: () => void;
+}
+
+function OwnershipActionsDropdown({ canCancel, isPendingOnly = false, onApprove, onReject, onCancel }: OwnershipActionsDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div className="vds-ownership-dropdown" ref={ref}>
+      <button
+        className={`vds-action-btn ${isPendingOnly ? 'vds-action-btn--pending-menu' : 'vds-action-btn--ownership-menu'}`}
+        onClick={() => setOpen((o) => !o)}
+        title={isPendingOnly ? 'Your request is pending — click to cancel' : 'Ownership actions'}
+      >
+        <i className={`bi ${isPendingOnly ? 'bi-hourglass-split' : 'bi-shield-fill-check'}`} />
+        <i className={`bi bi-chevron-${open ? 'up' : 'down'} vds-ownership-dropdown__caret`} />
+      </button>
+
+      {open && (
+        <div className="vds-ownership-dropdown__menu">
+          {/* Menu header */}
+          <div className={`vds-ownership-dropdown__header ${isPendingOnly ? 'vds-ownership-dropdown__header--pending' : ''}`}>
+            <i className={`bi ${isPendingOnly ? 'bi-hourglass-split' : 'bi-shield-fill-check'} me-2`} style={{ fontSize: '0.75rem' }} />
+            {isPendingOnly ? 'Request Pending' : 'Ownership Actions'}
+          </div>
+
+          {!isPendingOnly && onApprove && (
+            <button
+              className="vds-ownership-dropdown__item vds-ownership-dropdown__item--approve"
+              onClick={() => { onApprove(); setOpen(false); }}
+            >
+              <span className="vds-ownership-dropdown__icon vds-ownership-dropdown__icon--approve">
+                <i className="bi bi-check-lg" />
+              </span>
+              Approve
+            </button>
+          )}
+          {!isPendingOnly && onReject && (
+            <button
+              className="vds-ownership-dropdown__item vds-ownership-dropdown__item--reject"
+              onClick={() => { onReject(); setOpen(false); }}
+            >
+              <span className="vds-ownership-dropdown__icon vds-ownership-dropdown__icon--reject">
+                <i className="bi bi-x-lg" />
+              </span>
+              Reject
+            </button>
+          )}
+          {canCancel && onCancel && (
+            <>
+              {!isPendingOnly && <div className="vds-ownership-dropdown__divider" />}
+              <button
+                className="vds-ownership-dropdown__item vds-ownership-dropdown__item--cancel"
+                onClick={() => { onCancel(); setOpen(false); }}
+              >
+                <span className="vds-ownership-dropdown__icon vds-ownership-dropdown__icon--cancel">
+                  <i className="bi bi-x-circle-fill" />
+                </span>
+                Cancel Request
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function RecordsTable({
   records,
   onEdit,
   onDelete,
-  onViewHistory,
-  showZone = true,
-  showOwnerGroup = false,
-  nameSort = "",
-  onToggleSort,
+  isSharedZone = false,
+  isSuper = false,
+  isSupport = false,
+  isZoneAdmin = false,
+  userGroupIds = [],
+  onRequestOwnership,
+  onCloseOwnershipRequest,
+  onApproveOwnership,
+  onRejectOwnership,
 }: RecordsTableProps) {
-  // Tracks which row's FQDN was most recently copied (by row key) so the
-  // "Copied!" confirmation only lights up the one button that was clicked.
-  // Comparing by FQDN string is wrong when multiple rows share the same name;
-  // using rec.id ?? idx gives a stable per-row identity.
-  const [copiedRowKey, setCopiedRowKey] = useState<string | number | null>(
-    null,
-  );
-
-  const handleCopyFqdn = (fqdn: string, rowKey: string | number) => {
-    void copyToClipboard(fqdn).then((ok) => {
-      if (!ok) return;
-      setCopiedRowKey(rowKey);
-      setTimeout(() => setCopiedRowKey(null), 2000);
-    });
-  };
-
-  const handleSortToggle = () => {
-    if (!onToggleSort) return;
-    onToggleSort(nameSort === "ASC" ? "DESC" : "ASC");
-  };
-
-  const sortDir: SortDir =
-    nameSort === "ASC" ? "asc" : nameSort === "DESC" ? "desc" : null;
-
-  if (records.length === 0) {
+  if (!records.length) {
     return (
       <div className="vds-empty-state">
-        <i className="bi bi-search fs-1 mb-2" style={{ opacity: 0.4 }} />
+        <i className="bi bi-file-earmark-text fs-1 mb-2" style={{ opacity: 0.35 }} />
         <p className="mb-0 fw-semibold">No records found</p>
-        <small className="text-muted">
-          Enter a FQDN above and press Enter.
-        </small>
+        <small className="text-muted">Try adjusting the filter or add a new record.</small>
       </div>
     );
   }
 
+  const hasActions = !!(onEdit || onDelete || (isSharedZone && (onRequestOwnership || onApproveOwnership)));
+
   return (
-    <div
-      className="vds-zones-table-wrap"
-      style={{ overflow: "auto", maxHeight: "65vh" }}
-    >
-      <style>{COPY_KEYFRAMES}</style>
-      <table className="vds-zones-table" style={{ width: "100%" }}>
+    <div className="vds-zones-table-wrap">
+      <div className="vds-records-table-banner">
+        <ZoneTypePill isSharedZone={isSharedZone} />
+        <span className="vds-records-table-banner__hint">
+          {isSharedZone
+            ? 'Ownership columns are shown because this zone is shared.'
+            : 'This zone is private — ownership transfer is not available.'}
+        </span>
+      </div>
+
+      <table className="vds-zones-table">
         <thead>
           <tr>
-            <th
-              onClick={handleSortToggle}
-              style={{
-                cursor: onToggleSort ? "pointer" : "default",
-                userSelect: "none",
-                whiteSpace: "nowrap",
-              }}
-            >
-              FQDN <SortArrow dir={sortDir} />
-            </th>
-            <th style={{ whiteSpace: "nowrap" }}>TYPE</th>
-            <th style={{ whiteSpace: "nowrap" }}>TTL</th>
-            <th>RECORD DATA</th>
-            {showZone && <th style={{ whiteSpace: "nowrap" }}>ZONE</th>}
-            <th style={{ whiteSpace: "nowrap" }}>ZONE ACCESS</th>
-            {showOwnerGroup && <th>OWNER GROUP</th>}
-            <th>HISTORY</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>TTL</th>
+            <th>Record Data</th>
+            {isSharedZone && (
+              <>
+                <th>
+                  <span className="vds-th-with-icon">
+                    <i className="bi bi-people-fill me-1 text-primary" style={{ fontSize: '0.75rem' }} />
+                    Owner Group Name
+                  </span>
+                </th>
+                <th>
+                  <span className="vds-th-with-icon">
+                    <i className="bi bi-arrow-left-right me-1 text-warning" style={{ fontSize: '0.75rem' }} />
+                    Ownership Transfer Status
+                  </span>
+                </th>
+              </>
+            )}
+            <th>Status</th>
+            {hasActions && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
-          {records.map((rec, idx) => {
-            // `isShared` collapses the tri-state API value (true/false/absent)
-            // into a typed union so the access badge can use a single switch-like
-            // className without nested ternaries scattered through the JSX.
-            const isShared =
-              rec.zoneShared === true
-                ? "shared"
-                : rec.zoneShared === false
-                  ? "private"
-                  : null;
-
-            // Prefer the pre-computed FQDN from the API; fall back to
-            // constructing it from name + zone so the column is never empty.
-            const fqdn =
-              rec.fqdn ??
-              (rec.name && rec.zoneName
-                ? `${String(rec.name)}.${String(rec.zoneName)}`
-                : (rec.name ?? "—"));
+          {records.map((rec) => {
+            const capability: OwnershipCapability | null = isSharedZone
+              ? resolveOwnershipCapability(rec, { isSuper, isSupport, isZoneAdmin, userGroupIds })
+              : null;
 
             return (
-              <tr key={rec.id ?? idx}>
-                {/* FQDN */}
-                <td>
-                  <div className="d-flex align-items-center gap-2">
-                    <span
-                      className="vds-zone-avatar"
-                      style={{
-                        fontSize: "0.6rem",
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {fqdnInitials(String(fqdn))}
-                    </span>
-                    <div className="d-flex align-items-center gap-1 min-width-0">
-                      <FqdnTooltipSpan fqdn={String(fqdn)} />
-                      <button
-                        type="button"
-                        className="btn btn-link btn-sm p-0 flex-shrink-0"
-                        title="Copy FQDN"
-                        style={{
-                          lineHeight: 1,
-                          fontSize: "0.78rem",
-                          color:
-                            copiedRowKey === (rec.id ?? idx)
-                              ? "#16a34a"
-                              : "#94a3b8",
-                          transition: "color 0.15s",
-                        }}
-                        onClick={() =>
-                          handleCopyFqdn(String(fqdn), rec.id ?? idx)
-                        }
-                      >
-                        {copiedRowKey === (rec.id ?? idx) ? (
-                          <i
-                            key="check"
-                            className="bi bi-check2"
-                            style={{
-                              display: "inline-block",
-                              animation:
-                                "vdsCopiedCheck 0.35s cubic-bezier(0.175,0.885,0.32,1.275) forwards",
-                            }}
-                          />
-                        ) : (
-                          <i key="copy" className="bi bi-copy" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </td>
+              <tr key={rec.id}>
+                <td className="fw-semibold vds-table-primary">{rec.name}</td>
+                <td><span className="vds-record-type-badge">{rec.type}</span></td>
+                <td className="vds-table-secondary">{rec.ttl}s</td>
+                <td>{formatRecordData(rec)}</td>
 
-                {/* TYPE */}
-                <td
-                  className="vds-table-secondary small"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  <span className="vds-type-badge">
-                    {String(rec.type ?? "—")}
+                {isSharedZone && (
+                  <>
+                    <td><OwnerGroupCell record={rec} /></td>
+                    <td>
+                      <OwnershipStatusBadge
+                        status={rec.recordSetGroupChange?.ownershipTransferStatus}
+                      />
+                    </td>
+                  </>
+                )}
+
+                <td>
+                  <span className={`vds-zone-status-badge ${statusClass(rec.status)}`}>
+                    {rec.status}
                   </span>
                 </td>
 
-                {/* TTL */}
-                <td
-                  className="vds-table-secondary small"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  {rec.ttl != null ? `${String(rec.ttl)}s` : "—"}
-                </td>
+                {hasActions && (
+                  <td>
+                    <div className="d-flex gap-1 align-items-center flex-nowrap">
+                      {onEdit && (
+                        <button
+                          className="vds-action-btn vds-action-btn--edit"
+                          onClick={() => onEdit(rec)}
+                          title="Edit record"
+                        >
+                          <i className="bi bi-pencil-fill" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          className="vds-action-btn vds-action-btn--delete"
+                          onClick={() => onDelete(rec)}
+                          title="Delete record"
+                        >
+                          <i className="bi bi-trash3-fill" />
+                        </button>
+                      )}
 
-                {/* RECORD DATA */}
-                <td
-                  className="vds-table-secondary small"
-                  style={{
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word",
-                  }}
-                  title={summarizeRecordData(rec)}
-                >
-                  <RecordDataCell rec={rec} />
-                </td>
+                      {isSharedZone && capability && capability !== 'NONE' && (
+                        <>
+                          {capability === 'CLAIM' && onRequestOwnership && (
+                            <button
+                              className="vds-action-btn vds-action-btn--claim"
+                              onClick={() => onRequestOwnership(rec)}
+                              title="Claim ownership of this record"
+                            >
+                              <i className="bi bi-person-plus-fill" />
+                            </button>
+                          )}
 
-                {/* ZONE */}
-                {showZone && (
-                  <td
-                    className="vds-table-secondary small"
-                    style={{ overflowWrap: "break-word" }}
-                  >
-                    {String(rec.zoneName ?? rec.zone ?? "—")}
+                          {capability === 'REQUEST' && onRequestOwnership && (
+                            <button
+                              className="vds-action-btn vds-action-btn--request"
+                              onClick={() => onRequestOwnership(rec)}
+                              title="Request ownership transfer"
+                            >
+                              <i className="bi bi-arrow-left-right" />
+                            </button>
+                          )}
+
+                          {capability === 'REQUESTOR' && (
+                            <OwnershipActionsDropdown
+                              isPendingOnly
+                              canCancel
+                              onCancel={onCloseOwnershipRequest ? () => onCloseOwnershipRequest(rec) : undefined}
+                            />
+                          )}
+
+                          {capability === 'PENDING' && (
+                            <button
+                              className="vds-action-btn vds-action-btn--pending"
+                              disabled
+                              title="Ownership request is pending review"
+                            >
+                              <i className="bi bi-hourglass-split" />
+                            </button>
+                          )}
+
+                          {capability === 'APPROVER' && (
+                            <OwnershipActionsDropdown
+                              canCancel={false}
+                              onApprove={onApproveOwnership ? () => onApproveOwnership(rec) : undefined}
+                              onReject={onRejectOwnership ? () => onRejectOwnership(rec) : undefined}
+                            />
+                          )}
+
+                          {capability === 'ADMIN_APPROVER' && (
+                            <OwnershipActionsDropdown
+                              canCancel
+                              onApprove={onApproveOwnership ? () => onApproveOwnership(rec) : undefined}
+                              onReject={onRejectOwnership ? () => onRejectOwnership(rec) : undefined}
+                              onCancel={onCloseOwnershipRequest ? () => onCloseOwnershipRequest(rec) : undefined}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
                   </td>
                 )}
-
-                {/* ZONE ACCESS TYPE */}
-                <td
-                  className="vds-table-secondary small"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  {isShared ? (
-                    <span
-                      className={`vds-access-badge vds-access-badge--${isShared}`}
-                    >
-                      <i
-                        className={`bi ${isShared === "shared" ? "bi-share-fill" : "bi-lock-fill"} me-1`}
-                        style={{ fontSize: "0.65rem" }}
-                      />
-                      {isShared === "shared" ? "Shared" : "Private"}
-                    </span>
-                  ) : (
-                    <span className="vds-table-secondary small">—</span>
-                  )}
-                </td>
-
-                {/* OWNER GROUP */}
-                {showOwnerGroup && (
-                  <td
-                    className="vds-table-secondary small"
-                    style={{ overflowWrap: "break-word" }}
-                  >
-                    {String(rec.ownerGroupName ?? "—")}
-                  </td>
-                )}
-
-                {/* HISTORY */}
-                <td>
-                  <div className="d-flex gap-1 flex-nowrap">
-                    {onViewHistory && (
-                      <button
-                        type="button"
-                        className="vds-action-btn vds-action-btn--view"
-                        title="View history"
-                        onClick={() => onViewHistory(rec)}
-                      >
-                        <i className="bi bi-clock-history" />
-                      </button>
-                    )}
-                    {onEdit && (
-                      <button
-                        type="button"
-                        className="vds-action-btn vds-action-btn--edit"
-                        title="Edit record"
-                        onClick={() => onEdit(rec)}
-                      >
-                        <i className="bi bi-pencil" />
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button
-                        type="button"
-                        className="vds-action-btn vds-action-btn--delete"
-                        title="Delete record"
-                        onClick={() => onDelete(rec)}
-                      >
-                        <i className="bi bi-trash" />
-                      </button>
-                    )}
-                  </div>
-                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+
     </div>
   );
 }
