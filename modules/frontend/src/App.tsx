@@ -124,7 +124,11 @@ export function App() {
             />
             <Route
               path="/dnschanges/new"
-              element={<Navigate to="/dnschanges" replace />}
+              element={
+                <AppLayout>
+                  <DnsChangeNewPage />
+                </AppLayout>
+              }
             />
             <Route
               path="/dnschanges/:id"
@@ -140,7 +144,6 @@ export function App() {
             <Route path="*" element={<Navigate to="/zones" replace />} />
           </Routes>
         </BrowserRouter>
-        <ReactQueryDevtools initialIsOpen={false} />
       </AlertProvider>
     </QueryClientProvider>
   );
