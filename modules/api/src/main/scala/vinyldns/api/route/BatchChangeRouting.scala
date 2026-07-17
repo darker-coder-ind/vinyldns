@@ -138,17 +138,24 @@ class BatchChangeRoute(
               {
                 val convertApprovalStatus =
                   approvalStatus.flatMap(BatchChangeApprovalStatus.find)
-                authenticateAndExecute(
-                  batchChangeService.getBatchChangeCount(
-                    _,
-                    userName,
-                    dateTimeRangeStart,
-                    dateTimeRangeEnd,
-                    ignoreAccess,
-                    convertApprovalStatus
-                  )
-                ) { result =>
-                  complete(StatusCodes.OK, result)
+                handleRejections(invalidQueryHandler) {
+                  validate(
+                    approvalStatus.forall(s => BatchChangeApprovalStatus.find(s).isDefined),
+                    s"approvalStatus '${approvalStatus.getOrElse("")}' is not a valid value."
+                  ) {
+                    authenticateAndExecute(
+                      batchChangeService.getBatchChangeCount(
+                        _,
+                        userName,
+                        dateTimeRangeStart,
+                        dateTimeRangeEnd,
+                        ignoreAccess,
+                        convertApprovalStatus
+                      )
+                    ) { result =>
+                      complete(StatusCodes.OK, result)
+                    }
+                  }
                 }
               }
           }

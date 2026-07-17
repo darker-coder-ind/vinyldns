@@ -941,18 +941,11 @@ class BatchChangeRoutingSpec()
       }
     }
 
-    "ignore an unrecognized approvalStatus value (falls through to no filter)" in {
+    "return 400 for an unrecognized approvalStatus value" in {
       Get("/zones/batchrecordchanges/count?approvalStatus=NotAStatus") ~>
         batchChangeRoute ~> check {
-        status shouldBe OK
-
-        val resp = responseAs[BatchChangeCount]
-
-        // Same as the no-filter case for okAuth
-        resp.total shouldBe 4
-        resp.complete shouldBe 2
-        resp.pendingReview shouldBe 1
-        resp.pendingProcessing shouldBe 1
+        status shouldBe BadRequest
+        responseAs[String] should include("NotAStatus")
       }
     }
 

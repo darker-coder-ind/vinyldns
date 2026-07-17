@@ -1178,6 +1178,46 @@ class MySqlBatchChangeRepositoryIntegrationSpec
       excluded.total shouldBe 0
     }
 
+    "count batch changes with a start-only date bound" in {
+      val old = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.parse("2000-06-01T00:00:00Z"))
+      val recent = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.now.truncatedTo(ChronoUnit.MILLIS))
+
+      val f =
+        for {
+          _ <- repo.save(old)
+          _ <- repo.save(recent)
+          result <- repo.getBatchChangeCount(None, dateTimeStartRange = Some("2020-01-01 00:00:00"))
+        } yield result
+
+      val count = f.unsafeRunSync()
+      count.total shouldBe 1
+      count.complete shouldBe 1
+    }
+
+    "count batch changes with an end-only date bound" in {
+      val old = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.parse("2000-06-01T00:00:00Z"))
+      val recent = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.now.truncatedTo(ChronoUnit.MILLIS))
+
+      val f =
+        for {
+          _ <- repo.save(old)
+          _ <- repo.save(recent)
+          result <- repo.getBatchChangeCount(None, dateTimeEndRange = Some("2010-12-31 23:59:59"))
+        } yield result
+
+      val count = f.unsafeRunSync()
+      count.total shouldBe 1
+      count.complete shouldBe 1
+    }
+
     "return zero counts when the user has no matching batch changes" in {
       val f =
         for {
