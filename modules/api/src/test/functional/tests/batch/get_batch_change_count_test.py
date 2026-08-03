@@ -205,14 +205,10 @@ def test_get_batch_change_count_filters_by_approval_status(shared_zone_test_cont
 
 def test_get_batch_change_count_unrecognized_approval_status_is_ignored(shared_zone_test_context):
     """
-    Test that an unrecognized approvalStatus query value is ignored and falls back to the
-    unfiltered count for the user
+    Test that an unrecognized approvalStatus query value is rejected with HTTP 400
     """
     client = shared_zone_test_context.ok_vinyldns_client
 
-    unfiltered = client.get_batch_change_count(status=200)
-    bad_filter = client.get_batch_change_count(approval_status="NotAStatus", status=200)
+    error = client.get_batch_change_count(approval_status="NotAStatus", status=400)
 
-    assert_count_is_consistent(unfiltered)
-    assert_count_is_consistent(bad_filter)
-    assert_that(bad_filter["total"], is_(greater_than_or_equal_to(unfiltered["total"])))
+    assert_that(error, contains_string("NotAStatus"))
