@@ -28,6 +28,7 @@ vi.mock("../../../services/groupsService", () => ({
 }));
 
 import { DnsChangeForm } from "../../../components/dnsChanges/DnsChangeForm";
+import { groupsService } from "../../../services/groupsService";
 import { renderWithProviders } from "../../utils/renderWithProviders";
 
 /**
@@ -258,5 +259,44 @@ describe("<DnsChangeForm /> render + interaction", () => {
       screen.queryByRole("button", { name: /Confirm.*Submit/i }),
     ).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("shows a record-data validation message when the value is empty on submit", async () => {
+    const onSubmit = vi.fn();
+    const { container } = renderForm({ onSubmit });
+
+    const typeSelect = container.querySelector(
+      "select[name='changes.0.type']",
+    ) as HTMLSelectElement | null;
+    await userEvent.selectOptions(typeSelect!, "A");
+
+    const inputName = container.querySelector(
+      "input[name='changes.0.inputName']",
+    ) as HTMLInputElement | null;
+    await userEvent.type(inputName!, "host.example.");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /Submit Batch Change/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Record data is required")).toBeInTheDocument();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("does not show the shared-zone placeholder when owner groups are available", async () => {
+    vi.mocked(groupsService.getGroups).mockResolvedValue({
+      data: { groups: [{ id: "g-1", name: "Alpha Team" }] },
+    } as never);
+
+    renderForm();
+
+    expect(
+      screen.queryByPlaceholderText("Required for shared zone records"),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("option", { name: "Alpha Team" }),
+    ).toBeInTheDocument();
   });
 });

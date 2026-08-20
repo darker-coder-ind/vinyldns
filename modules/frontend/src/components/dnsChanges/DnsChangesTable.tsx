@@ -119,7 +119,14 @@ export function DnsChangesTable({
   }
 
   return (
-    <div className="vds-zones-table-wrap">
+    <div
+      className="vds-zones-table-wrap"
+      style={{
+        maxHeight: "calc(100vh - 260px)",
+        overflowY: "auto",
+        overflowX: "auto",
+      }}
+    >
       <style>{COPY_KEYFRAMES}</style>
       <table className="vds-zones-table">
         <thead>
@@ -149,8 +156,8 @@ export function DnsChangesTable({
                 {/* Full UUID is preserved in the title attr and available via
                     the clipboard button; showing only 8 chars keeps the table
                     readable without wrapping on smaller viewports. */}
-                <td style={{ wordBreak: "break-all" }}>
-                  <div className="d-flex align-items-start gap-1 flex-wrap">
+                <td style={{ whiteSpace: "nowrap" }}>
+                  <div className="d-flex align-items-center gap-1">
                     <Link
                       to={`/dnschanges/${change.id}`}
                       state={
@@ -158,10 +165,12 @@ export function DnsChangesTable({
                           ? { fromTab, paging: currentPaging }
                           : undefined
                       }
-                      className="text-decoration-none small fw-semibold vds-table-primary"
-                      style={{ wordBreak: "break-all" }}
+                      className="text-decoration-none small fw-semibold vds-table-primary font-monospace"
+                      title={change.id}
+                      style={{ whiteSpace: "nowrap" }}
                     >
-                      {change.id}
+                      {change.id.substring(0, 8)}
+                      {"\u2026"}
                     </Link>
                     <button
                       type="button"
@@ -192,7 +201,7 @@ export function DnsChangesTable({
                   </div>
                 </td>
                 {ignoreAccess && (
-                  <td>
+                  <td style={{ whiteSpace: "nowrap" }}>
                     <span className="d-flex align-items-center gap-1">
                       <i
                         className="bi bi-person-circle vds-table-secondary"
@@ -204,12 +213,14 @@ export function DnsChangesTable({
                     </span>
                   </td>
                 )}
-                <td>
-                  <span className="vds-count-badge">{change.totalChanges}</span>
+                <td className="vds-table-secondary small">
+                  {change.totalChanges}
                 </td>
                 <td>
                   <span
-                    className={`vds-status-badge ${changeStatusClass(change.status)}`}
+                    className={`vds-status-text ${changeStatusClass(
+                      change.status,
+                    ).replace("vds-status-badge", "vds-status-text")}`}
                   >
                     {changeStatusLabel(change.status)}
                   </span>
@@ -222,7 +233,10 @@ export function DnsChangesTable({
                     <span className="vds-table-placeholder">{"\u2014"}</span>
                   )}
                 </td>
-                <td className="vds-table-secondary small">
+                <td
+                  className="vds-table-secondary small"
+                  style={{ whiteSpace: "nowrap" }}
+                >
                   {formatDateTime(change.createdTimestamp)}
                 </td>
                 <td>
@@ -234,19 +248,21 @@ export function DnsChangesTable({
                           ? { fromTab, paging: currentPaging }
                           : undefined
                       }
-                      className="vds-action-btn vds-action-btn--view"
+                      className="vds-ubtn vds-ubtn--secondary vds-ubtn--sm"
                       title="View"
                     >
-                      <i className="bi bi-eye-fill" />
+                      <i className="bi bi-eye" />
+                      <span>View</span>
                     </Link>
                     {canCancel && onCancel && (
                       <button
                         type="button"
-                        className="vds-action-btn vds-action-btn--cancel"
+                        className="vds-ubtn vds-ubtn--danger-outline vds-ubtn--sm"
                         title="Cancel"
                         onClick={() => onCancel(change)}
                       >
                         <i className="bi bi-x-circle" />
+                        <span>Cancel</span>
                       </button>
                     )}
                   </div>

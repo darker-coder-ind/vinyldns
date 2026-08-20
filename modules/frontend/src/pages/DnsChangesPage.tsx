@@ -15,10 +15,9 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DnsChangesTable } from "../components/dnsChanges/DnsChangesTable";
-import { DnsChangeForm } from "../components/dnsChanges/DnsChangeForm";
 import { PaginatedSection } from "../components/common/Pagination";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { TimeFilterDropdown } from "../components/common/TimeFilterDropdown";
@@ -27,11 +26,8 @@ import { useDnsChanges } from "../hooks/useDnsChanges";
 import { useProfile } from "../contexts/ProfileContext";
 import { useAlerts } from "../contexts/AlertContext";
 import { dnsChangeService } from "../services/dnsChangeService";
-import type {
-  BatchChangeCount,
-  DnsChangeSummary,
-  CreateDnsChangeRequest,
-} from "../types/dnsChange";
+import { formatDateTime } from "../utils/dateUtils";
+import type { BatchChangeCount, DnsChangeSummary } from "../types/dnsChange";
 import type { PagingState } from "../types/common";
 
 /**
@@ -46,6 +42,7 @@ import type { PagingState } from "../types/common";
 export function DnsChangesPage() {
   const { profile } = useProfile();
   const location = useLocation();
+  const navigate = useNavigate();
   const savedState = location.state as {
     tab?: "my" | "all";
     paging?: PagingState;
@@ -106,57 +103,6 @@ export function DnsChangesPage() {
   const [cancelTarget, setCancelTarget] = useState<DnsChangeSummary | null>(
     null,
   );
-
-  // ── New DNS Change modal state ────────────────────────────────────────────
-  const [showNewModal, setShowNewModal] = useState(false);
-  const [newModalRowErrors, setNewModalRowErrors] = useState<string[][]>([]);
-
-  // Lock body scroll while the new-change modal is open.
-  useEffect(() => {
-    if (!showNewModal) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [showNewModal]);
-
-  const handleNewChangeSubmit = (
-    data: CreateDnsChangeRequest,
-    allowManualReview: boolean,
-  ) => {
-    setNewModalRowErrors([]);
-    createBatchChange(
-      { data, allowManualReview },
-      {
-        onSuccess: () => {
-          setShowNewModal(false);
-          setNewModalRowErrors([]);
-          void refetch();
-        },
-        onError: (err: unknown) => {
-          const error = err as {
-            response?: { status?: number; data?: unknown };
-          };
-          if (
-            error.response?.status === 400 &&
-            Array.isArray(error.response.data)
-          ) {
-            const perRow = (
-              error.response.data as Array<{ errors?: string[] }>
-            ).map((c) => c.errors ?? []);
-            setNewModalRowErrors(perRow);
-            if (perRow.some((e) => e.length > 0)) {
-              addAlert(
-                "danger",
-                "Errors found in one or more rows. Please correct and resubmit.",
-              );
-            }
-          }
-        },
-      },
-    );
-  };
 
   const handleConfirmCancel = () => {
     if (!cancelTarget) return;
@@ -278,10 +224,7 @@ export function DnsChangesPage() {
         <button
           type="button"
           className="btn btn-primary d-flex align-items-center gap-2 vds-btn-primary-shadow vds-btn-nav"
-          onClick={() => {
-            setNewModalRowErrors([]);
-            setShowNewModal(true);
-          }}
+          onClick={() => void navigate("/dnschanges/new")}
         >
           <i className="bi bi-plus-circle-fill" />
           New DNS Change
@@ -379,29 +322,18 @@ export function DnsChangesPage() {
                   "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
               }}
             >
-              <div className="d-flex align-items-center justify-content-end gap-2">
-                {/* Open Requests Only — styled as a flat filter toggle (matches ZonesPage pattern) */}
-                <button
-                  type="button"
-                  className={`btn btn-sm d-flex align-items-center gap-1 vds-btn-flat${approvalStatus === "PendingReview" ? " vds-btn-flat--active" : ""}`}
-                  onClick={() =>
-                    setApprovalStatus(
-                      approvalStatus === "PendingReview" ? "" : "PendingReview",
-                    )
-                  }
-                >
-                  <i className="bi bi-hourglass-split" />
-                  <span className="vds-btn-flat__label">Open Only</span>
-                  {approvalStatus === "PendingReview" && (
-                    <span className="vds-filter-chip--accent">On</span>
-                  )}
-                </button>
-
-                {/* Submitter filter — All Requests only, grows to fill remaining space */}
+              <div
+                className="d-flex align-items-center justify-content-end gap-2"
+                style={{ width: "100%" }}
+              >
                 {ignoreAccess && (
                   <div
                     className="vds-search-group input-group input-group-sm"
-                    style={{ flex: 1, minWidth: 120 }}
+                    style={{
+                      flex: "0 0 320px",
+                      minWidth: 120,
+                      maxWidth: 320,
+                    }}
                   >
                     <span className="input-group-text border-0 bg-transparent pe-1">
                       <i className="bi bi-person text-muted" />
@@ -426,7 +358,22 @@ export function DnsChangesPage() {
                   </div>
                 )}
 
-                {/* Time filter */}
+                <button
+                  type="button"
+                  className={`btn btn-sm d-flex align-items-center gap-1 vds-btn-flat${approvalStatus === "PendingReview" ? " vds-btn-flat--active" : ""}`}
+                  onClick={() =>
+                    setApprovalStatus(
+                      approvalStatus === "PendingReview" ? "" : "PendingReview",
+                    )
+                  }
+                >
+                  <i className="bi bi-hourglass-split" />
+                  <span className="vds-btn-flat__label">Open Only</span>
+                  {approvalStatus === "PendingReview" && (
+                    <span className="vds-filter-chip--accent">On</span>
+                  )}
+                </button>
+
                 <TimeFilterDropdown
                   value={changeTimeRange}
                   dateFrom={changeDateFrom}
@@ -787,13 +734,38 @@ export function DnsChangesPage() {
                   background: "#f8fafd",
                   border: "1px solid #e2e8f0",
                   borderRadius: "0.5rem",
-                  fontFamily: "ui-monospace,SFMono-Regular,Menlo,monospace",
-                  fontSize: "0.78rem",
-                  color: "#1e5fa8",
-                  wordBreak: "break-all",
                 }}
               >
-                {cancelTarget.id}
+                <div
+                  style={{
+                    fontFamily: "ui-monospace,SFMono-Regular,Menlo,monospace",
+                    fontSize: "0.78rem",
+                    color: "#1e5fa8",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {cancelTarget.id}
+                </div>
+                <div
+                  style={{
+                    marginTop: "0.4rem",
+                    fontSize: "0.78rem",
+                    color: "#64748b",
+                  }}
+                >
+                  Submitted {formatDateTime(cancelTarget.createdTimestamp)}
+                </div>
+                {cancelTarget.comments && (
+                  <div
+                    style={{
+                      marginTop: "0.25rem",
+                      fontSize: "0.78rem",
+                      color: "#64748b",
+                    }}
+                  >
+                    {cancelTarget.comments}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -822,114 +794,29 @@ export function DnsChangesPage() {
                   fontWeight: 500,
                 }}
               >
-                Decline
+                Keep DNS Change
               </button>
               <button
                 type="button"
                 onClick={handleConfirmCancel}
                 style={{
                   padding: "0.5rem 1.25rem",
-                  background: "linear-gradient(135deg,#f59e0b,#d97706)",
+                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
                   border: "none",
                   color: "#fff",
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.85rem",
                   fontWeight: 600,
-                  boxShadow: "0 4px 12px rgba(245,158,11,0.35)",
+                  boxShadow: "0 4px 12px rgba(220,38,38,0.35)",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                 }}
               >
-                <i className="bi bi-check2" />
-                Confirm Cancel
+                <i className="bi bi-x-circle-fill" />
+                Cancel DNS Change
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── New DNS Change modal ──────────────────────────────────────────── */}
-      {showNewModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="new-change-modal-title"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15,23,42,0.65)",
-            backdropFilter: "blur(3px)",
-            zIndex: 1080,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1rem",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isSubmitting)
-              setShowNewModal(false);
-          }}
-        >
-          <div className="vds-nbatch-modal__card">
-            {/* Modal header */}
-            <div className="vds-nbatch-modal__header">
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  background: "linear-gradient(135deg, #1e5fa8, #0d1b3e)",
-                  boxShadow: "0 4px 12px rgba(13,27,62,0.35)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <i className="bi bi-plus-circle-fill text-white fs-6" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <h5
-                  id="new-change-modal-title"
-                  className="vds-nbatch-modal__title"
-                >
-                  New Batch Change
-                </h5>
-                <small className="vds-nbatch-modal__subtitle">
-                  Submit a new DNS batch change request for review and
-                  processing
-                </small>
-              </div>
-              {isSubmitting && (
-                <span className="d-flex align-items-center gap-2 small text-muted me-2">
-                  <span
-                    className="spinner-border spinner-border-sm"
-                    role="status"
-                  />
-                  Submitting…
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label="Close"
-                disabled={isSubmitting}
-                onClick={() => setShowNewModal(false)}
-                className="rhm-header-btn"
-              >
-                <i className="bi bi-x-lg rhm-close-icon" />
-              </button>
-            </div>
-
-            {/* Modal body — scrollable */}
-            <div className="vds-nbatch-modal__body">
-              <DnsChangeForm
-                onSubmit={handleNewChangeSubmit}
-                onCancel={() => setShowNewModal(false)}
-                isSubmitting={isSubmitting}
-                serverRowErrors={newModalRowErrors}
-              />
             </div>
           </div>
         </div>

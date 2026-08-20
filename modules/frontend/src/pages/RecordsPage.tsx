@@ -106,6 +106,7 @@ export function RecordsPage() {
   const {
     records,
     isLoading,
+    isFetching,
     nameFilter,
     search,
     nextPage,
@@ -1148,7 +1149,7 @@ export function RecordsPage() {
         </div>
       )}
 
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <LoadingSpinner />
       ) : (
         <>
