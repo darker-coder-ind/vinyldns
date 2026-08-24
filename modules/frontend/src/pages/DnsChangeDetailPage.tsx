@@ -967,7 +967,18 @@ export function DnsChangeDetailPage() {
           }}
         >
           {(prevPageEnabled || nextPageEnabled) && (
-            <div className="d-flex align-items-center justify-content-end px-3 pt-2">
+            <div
+              className="d-flex align-items-center justify-content-end px-3 pt-2"
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 3,
+                background: isDarkTheme() ? "#0f172a" : "#ffffff",
+                borderBottom: isDarkTheme()
+                  ? "1px solid rgba(255,255,255,0.08)"
+                  : "1px solid rgba(15,23,42,0.06)",
+              }}
+            >
               <Pagination
                 onPrev={() => setPageNum((p) => p - 1)}
                 onNext={() => setPageNum((p) => p + 1)}

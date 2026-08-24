@@ -165,9 +165,9 @@ export function DnsChangesTable({
                           ? { fromTab, paging: currentPaging }
                           : undefined
                       }
-                      className="text-decoration-none small fw-semibold vds-table-primary font-monospace"
+                      className="text-decoration-none small fw-semibold vds-table-primary"
                       title={change.id}
-                      style={{ whiteSpace: "nowrap" }}
+                      style={{ whiteSpace: "nowrap", fontFamily: "inherit" }}
                     >
                       {change.id.substring(0, 8)}
                       {"\u2026"}
