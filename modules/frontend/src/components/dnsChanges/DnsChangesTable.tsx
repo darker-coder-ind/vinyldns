@@ -216,11 +216,19 @@ export function DnsChangesTable({
                 <td className="vds-table-secondary small">
                   {change.totalChanges}
                 </td>
-                <td>
+                <td
+                  style={{
+                    overflowWrap: "break-word",
+                    maxWidth: 250,
+                    wordBreak: "break-word",
+                    display: "table-cell",
+                  }}
+                >
                   <span
                     className={`vds-status-text ${changeStatusClass(
                       change.status,
                     ).replace("vds-status-badge", "vds-status-text")}`}
+                    style={{ display: "inline-block", maxWidth: "100%" }}
                   >
                     {changeStatusLabel(change.status)}
                   </span>
@@ -235,7 +243,10 @@ export function DnsChangesTable({
                 </td>
                 <td
                   className="vds-table-secondary small"
-                  style={{ whiteSpace: "nowrap" }}
+                  style={{
+                    overflowWrap: "break-word",
+                    maxWidth: 250,
+                  }}
                 >
                   {formatDateTime(change.createdTimestamp)}
                 </td>

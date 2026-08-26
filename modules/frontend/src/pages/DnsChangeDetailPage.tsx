@@ -882,8 +882,9 @@ export function DnsChangeDetailPage() {
       <div
         className="vds-tab-panel-content rounded-3 mb-3"
         style={{
-          borderTop: isDarkTheme() ? "3px solid #64748b" : "3px solid #94a3b8",
-          overflow: "visible",
+          border: isDarkTheme() ? "1px solid #2d4163" : "1px solid #c7deff",
+          borderRadius: "12px",
+          overflow: "hidden",
         }}
       >
         <div className="px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2 vds-section-toolbar">
@@ -955,55 +956,78 @@ export function DnsChangeDetailPage() {
           </div>
         </div>
 
+        {/* Top Pagination */}
+        {(prevPageEnabled || nextPageEnabled) && (
+          <div
+            className="d-flex align-items-center justify-content-end px-3 py-2"
+            style={{
+              background: isDarkTheme() ? "#0f172a" : "#ffffff",
+              borderBottom: isDarkTheme()
+                ? "1px solid rgba(255,255,255,0.08)"
+                : "1px solid rgba(15,23,42,0.06)",
+            }}
+          >
+            <Pagination
+              onPrev={() => setPageNum((p) => p - 1)}
+              onNext={() => setPageNum((p) => p + 1)}
+              prevEnabled={prevPageEnabled}
+              nextEnabled={nextPageEnabled}
+              rangeLabel={
+                filteredChanges.length > 0
+                  ? `${(pageNum - 1) * pageSize + 1}–${Math.min(pageNum * pageSize, filteredChanges.length)} of ${filteredChanges.length}`
+                  : undefined
+              }
+            />
+          </div>
+        )}
+
+        {/* Scrollable Table Container */}
         <div
           className="vds-zones-table-wrap"
           style={{
-            borderRadius: 0,
-            boxShadow: "none",
-            border: "none",
-            overflowX: "auto",
+            maxHeight: "calc(100vh - 320px)",
             overflowY: "auto",
-            maxHeight: "calc(100vh - 280px)",
+            overflowX: "auto",
           }}
         >
-          {(prevPageEnabled || nextPageEnabled) && (
-            <div
-              className="d-flex align-items-center justify-content-end px-3 pt-2"
-              style={{
-                position: "sticky",
-                top: 0,
-                zIndex: 3,
-                background: isDarkTheme() ? "#0f172a" : "#ffffff",
-                borderBottom: isDarkTheme()
-                  ? "1px solid rgba(255,255,255,0.08)"
-                  : "1px solid rgba(15,23,42,0.06)",
-              }}
-            >
-              <Pagination
-                onPrev={() => setPageNum((p) => p - 1)}
-                onNext={() => setPageNum((p) => p + 1)}
-                prevEnabled={prevPageEnabled}
-                nextEnabled={nextPageEnabled}
-                rangeLabel={
-                  filteredChanges.length > 0
-                    ? `${(pageNum - 1) * pageSize + 1}–${Math.min(pageNum * pageSize, filteredChanges.length)} of ${filteredChanges.length}`
-                    : undefined
-                }
-              />
-            </div>
-          )}
-          <table className="vds-zones-table vds-dns-change-detail-table">
+          <table
+            className="vds-zones-table vds-dns-change-detail-table"
+            style={{
+              width: "100%",
+              borderRadius: 0,
+            }}
+          >
             <thead>
-              <tr>
-                <th>Change Type</th>
-                <th>Input Name</th>
-                <th>Recordset Name</th>
-                <th>Zone Name</th>
-                <th>Record Type</th>
-                <th>Record Data</th>
-                <th>TTL</th>
-                <th>Status</th>
-                <th>Additional Info</th>
+              <tr
+                style={{
+                  background: isDarkTheme() ? "#162035" : "#f1f5f9",
+                }}
+              >
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Change Type
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Input Name
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Recordset Name
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Zone Name
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Record Type
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Record Data
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>TTL</th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Status
+                </th>
+                <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                  Additional Info
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1125,9 +1149,8 @@ export function DnsChangeDetailPage() {
           ref={reviewPanelRef}
           className="vds-tab-panel-content rounded-3 mb-3"
           style={{
-            borderTop: isDarkTheme()
-              ? "3px solid #64748b"
-              : "3px solid #94a3b8",
+            border: isDarkTheme() ? "1px solid #2d4163" : "1px solid #c7deff",
+            borderRadius: "12px",
             overflow: "hidden",
           }}
         >
@@ -1261,7 +1284,7 @@ export function DnsChangeDetailPage() {
                 <>
                   <button
                     type="button"
-                    className="vds-ubtn vds-ubtn--danger-outline"
+                    className="vds-ubtn vds-ubtn--danger"
                     onClick={handleReject}
                   >
                     <i className="bi bi-x-circle-fill" />

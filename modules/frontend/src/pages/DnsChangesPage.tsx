@@ -309,8 +309,13 @@ export function DnsChangesPage() {
 
           {/* ── Animated filters row ── */}
           <div
-            className="d-flex align-items-center pt-2"
-            style={{ minHeight: 32 }}
+            className="d-flex align-items-center"
+            style={{
+              minHeight: showFilters ? 32 : 0,
+              paddingTop: showFilters ? "0.5rem" : "0",
+              transition:
+                "min-height 0.4s cubic-bezier(0.4,0,0.2,1), padding-top 0.4s cubic-bezier(0.4,0,0.2,1)",
+            }}
           >
             <div
               style={{
