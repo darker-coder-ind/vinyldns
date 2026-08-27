@@ -620,12 +620,30 @@ h1.h3 {
   -webkit-box-shadow: 0 0 0 1000px #1a2640 inset !important;
   box-shadow: 0 0 0 1000px #1a2640 inset !important;
   -webkit-text-fill-color: #cdd9ed !important;
+  color: #cdd9ed !important;
   caret-color: #cdd9ed !important;
-  /* Freeze background-color and border-color at pre-autofill values (the inline
-     styles we set) so Chrome's autofill highlight never overrides them visually */
+  border-color: rgba(127, 168, 216, 0.2) !important;
   transition:
     background-color 9999s ease 0s,
-    border-color 9999s ease 0s !important;
+    border-color 9999s ease 0s,
+    color 9999s ease 0s !important;
+  outline: none !important;
+}
+/* Light theme autofill styling */
+[data-vds-theme="light"] .form-control:-webkit-autofill,
+[data-vds-theme="light"] .form-control:-webkit-autofill:hover,
+[data-vds-theme="light"] .form-control:-webkit-autofill:focus,
+[data-vds-theme="light"] .form-control:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #212529 !important;
+  color: #212529 !important;
+  caret-color: #212529 !important;
+  border-color: #dde3ec !important;
+  transition:
+    background-color 9999s ease 0s,
+    border-color 9999s ease 0s,
+    color 9999s ease 0s !important;
   outline: none !important;
 }
 [data-vds-theme="dark"] label,
