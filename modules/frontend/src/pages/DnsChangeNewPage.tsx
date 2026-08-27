@@ -43,6 +43,23 @@ export function DnsChangeNewPage() {
   // Guards navigation away from the form so an in-progress batch isn't
   // discarded by an accidental Back click.
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(
+    () => document.documentElement.getAttribute("data-vds-theme") === "dark",
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(
+        document.documentElement.getAttribute("data-vds-theme") === "dark",
+      );
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-vds-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     setCrumbs([
@@ -51,6 +68,57 @@ export function DnsChangeNewPage() {
     ]);
     return () => setCrumbs(null);
   }, [setCrumbs]);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      if (hasUnsaved) {
+        window.history.pushState(null, "", window.location.href);
+        setShowLeaveConfirm(true);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsaved]);
+
+  // Handle breadcrumb navigation with unsaved changes protection
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      // Check if click is on a breadcrumb link
+      const target = (e.target as Element).closest("a[href]");
+      if (!target) return;
+
+      // Check if this is a breadcrumb link
+      const isBreadcrumb =
+        target.classList.contains("vds-topbar__crumb-link") ||
+        target.classList.contains("vds-topbar__home-link");
+      if (!isBreadcrumb) return;
+
+      // If we have unsaved changes, prevent navigation and show modal
+      if (hasUnsaved) {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowLeaveConfirm(true);
+        return;
+      }
+    };
+
+    document.addEventListener("click", handleLinkClick, true);
+    return () => {
+      document.removeEventListener("click", handleLinkClick, true);
+    };
+  }, [hasUnsaved]);
+
+  const requestLeave = () => {
+    if (hasUnsaved) {
+      setShowLeaveConfirm(true);
+    } else {
+      navigate("/dnschanges");
+    }
+  };
 
   const handleSubmit = (
     data: CreateDnsChangeRequest,
@@ -108,7 +176,7 @@ export function DnsChangeNewPage() {
         <button
           type="button"
           className="btn btn-sm d-flex align-items-center gap-2 vds-btn-flat"
-          onClick={() => setShowLeaveConfirm(true)}
+          onClick={requestLeave}
         >
           <i className="bi bi-arrow-left" />
           <span className="vds-btn-flat__label">Back to DNS Changes</span>
@@ -117,9 +185,10 @@ export function DnsChangeNewPage() {
 
       <DnsChangeForm
         onSubmit={handleSubmit}
-        onCancel={() => setShowLeaveConfirm(true)}
+        onCancel={() => navigate("/dnschanges")}
         isSubmitting={isSubmitting}
         serverRowErrors={serverRowErrors}
+        onUnsavedChange={setHasUnsaved}
       />
 
       {showLeaveConfirm && (
@@ -144,8 +213,8 @@ export function DnsChangeNewPage() {
         >
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #e8ecf0",
+              background: isDark ? "#1e293b" : "#ffffff",
+              border: `1px solid ${isDark ? "#2d4163" : "#e8ecf0"}`,
               borderRadius: "0.85rem",
               boxShadow: "0 25px 60px rgba(0,0,0,0.4)",
               width: "min(440px, 100%)",
@@ -158,8 +227,10 @@ export function DnsChangeNewPage() {
                 alignItems: "center",
                 gap: "0.85rem",
                 padding: "1.1rem 1.4rem",
-                borderBottom: "1px solid #e8ecf0",
-                background: "linear-gradient(90deg,#ffffff,#f8fafd)",
+                borderBottom: `1px solid ${isDark ? "#2d4163" : "#e8ecf0"}`,
+                background: isDark
+                  ? "linear-gradient(90deg,#1e293b,#162035)"
+                  : "linear-gradient(90deg,#ffffff,#f8fafd)",
               }}
             >
               <span
@@ -185,7 +256,7 @@ export function DnsChangeNewPage() {
                     margin: 0,
                     fontSize: "1rem",
                     fontWeight: 700,
-                    color: "#0d1b3e",
+                    color: isDark ? "#e2e8f0" : "#0d1b3e",
                   }}
                 >
                   Discard batch change?
@@ -194,7 +265,7 @@ export function DnsChangeNewPage() {
                   style={{
                     marginTop: 2,
                     fontSize: "0.75rem",
-                    color: "#64748b",
+                    color: isDark ? "#94a3b8" : "#64748b",
                   }}
                 >
                   Any changes you have entered will be lost
@@ -207,8 +278,8 @@ export function DnsChangeNewPage() {
                 justifyContent: "flex-end",
                 gap: "0.6rem",
                 padding: "0.9rem 1.4rem",
-                borderTop: "1px solid #e8ecf0",
-                background: "#f8fafd",
+                borderTop: `1px solid ${isDark ? "#2d4163" : "#e8ecf0"}`,
+                background: isDark ? "#162032" : "#f8fafd",
               }}
             >
               <button
@@ -217,8 +288,8 @@ export function DnsChangeNewPage() {
                 style={{
                   padding: "0.5rem 1.1rem",
                   background: "transparent",
-                  border: "1px solid #d4dbe8",
-                  color: "#334155",
+                  border: `1px solid ${isDark ? "#2d4163" : "#d4dbe8"}`,
+                  color: isDark ? "#94a3b8" : "#334155",
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.85rem",

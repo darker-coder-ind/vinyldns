@@ -735,7 +735,7 @@ function ChangeRow({
         <input
           type="number"
           className="form-control form-control-sm"
-          placeholder="300"
+          placeholder=""
           disabled={!isAdd}
           min={30}
           max={2147483647}
@@ -923,6 +923,45 @@ function ScheduledTimeField({
 }
 
 /**
+ * Check if a change item has meaningful data that would be lost on discard.
+ * Returns true if either inputName has a value OR the corresponding record field
+ * for the row's type has a value.
+ */
+export function hasMeaningfulDiscardData(changes: ChangeFormItem[]): boolean {
+  // If 2+ rows: immediately true (assume meaningful data)
+  if (changes.length >= 2) return true;
+
+  // Single row: check if inputName OR record fields have values
+  if (changes.length === 1) {
+    const c = changes[0];
+    if (c.inputName && c.inputName.trim()) return true;
+
+    const record = c.record ?? {};
+    const hasRecordData =
+      (record.address && String(record.address).trim()) ||
+      (record.cname && String(record.cname).trim()) ||
+      (record.ptrdname && String(record.ptrdname).trim()) ||
+      (record.text && String(record.text).trim()) ||
+      (record.preference !== undefined && record.preference !== null) ||
+      (record.exchange && String(record.exchange).trim()) ||
+      (record.nsdname && String(record.nsdname).trim()) ||
+      (record.priority !== undefined && record.priority !== null) ||
+      (record.weight !== undefined && record.weight !== null) ||
+      (record.port !== undefined && record.port !== null) ||
+      (record.target && String(record.target).trim()) ||
+      (record.order !== undefined && record.order !== null) ||
+      (record.flags && String(record.flags).trim()) ||
+      (record.service && String(record.service).trim()) ||
+      (record.regexp && String(record.regexp).trim()) ||
+      (record.replacement && String(record.replacement).trim());
+
+    return !!hasRecordData;
+  }
+
+  return false;
+}
+
+/**
  * @param onSubmit        - Receives the fully normalized `CreateDnsChangeRequest`
  *                          and the `allowManualReview` flag on form submit.
  * @param onCancel        - Called when the user dismisses without submitting.
@@ -936,6 +975,8 @@ interface DnsChangeFormProps {
   isSubmitting: boolean;
   /** Per-row server errors returned by a 400 API response */
   serverRowErrors?: string[][];
+  /** Callback to notify parent when unsaved data is detected */
+  onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 /**
@@ -1470,6 +1511,7 @@ export function DnsChangeForm({
   onCancel,
   isSubmitting,
   serverRowErrors,
+  onUnsavedChange,
 }: DnsChangeFormProps) {
   const [allowManualReview, setAllowManualReview] = useState(false);
   const [rowErrors, setRowErrors] = useState<string[][]>([]);
@@ -1558,6 +1600,46 @@ export function DnsChangeForm({
     name: "changes",
   });
 
+  // Watch changes to detect unsaved data
+  const allChanges = useWatch({
+    control,
+    name: "changes",
+  });
+
+  // Create a dependency value from stringified key fields to enable proper change detection
+  // for nested form objects
+  const changesDependency = JSON.stringify(
+    allChanges.map((c) => ({
+      inputName: c.inputName,
+      type: c.type,
+      record: c.record,
+    })),
+  );
+
+  // Detect unsaved changes and notify parent
+  useEffect(() => {
+    if (onUnsavedChange) {
+      const hasUnsaved = hasMeaningfulDiscardData(allChanges);
+      onUnsavedChange(hasUnsaved);
+    }
+  }, [changesDependency, onUnsavedChange, allChanges]);
+
+  // Browser refresh warning for unsaved data
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasMeaningfulDiscardData(allChanges)) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [allChanges]);
+
   // Auto-focus the Change Type select of the newly added row whenever a row
   // is appended. This mirrors the AngularJS addSingleChange() focus behavior.
   useEffect(() => {
@@ -1573,32 +1655,6 @@ export function DnsChangeForm({
     }
     prevFieldsLengthRef.current = fields.length;
   }, [fields.length]);
-
-  /**
-   * Show a confirmation alert when the user tries to refresh the browser
-   * if the form has unsaved data. This prevents accidental data loss.
-   * Uses a ref to ensure the event handler always has access to the current state.
-   */
-  useEffect(() => {
-    // Update ref with current state - form is dirty if any field has been modified
-    shouldWarnRef.current = formState.isDirty && !pendingSubmitData;
-  }, [formState.isDirty, pendingSubmitData]);
-
-  // Set up the beforeunload event listener (only once)
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (shouldWarnRef.current) {
-        e.preventDefault();
-        e.returnValue = "";
-        return "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
 
   /**
    * Scrolls the first field that failed react-hook-form validation into view
