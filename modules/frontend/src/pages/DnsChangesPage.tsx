@@ -30,6 +30,14 @@ import { formatDateTime } from "../utils/dateUtils";
 import type { BatchChangeCount, DnsChangeSummary } from "../types/dnsChange";
 import type { PagingState } from "../types/common";
 
+/** Returns true when the document is currently using the dark VDS theme. */
+function isDarkTheme(): boolean {
+  return (
+    document.documentElement.getAttribute("data-vds-theme") === "dark" ||
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+}
+
 /**
  * DNS Changes page — lists batch change requests submitted to VinylDNS.
  *
@@ -647,10 +655,10 @@ export function DnsChangesPage() {
         >
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #e8ecf0",
+              background: isDarkTheme() ? "#1e293b" : "#ffffff",
+              border: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
               borderRadius: "0.85rem",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.4)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.45)",
               width: "min(460px, 100%)",
               overflow: "hidden",
             }}
@@ -662,8 +670,11 @@ export function DnsChangesPage() {
                 alignItems: "center",
                 gap: "0.85rem",
                 padding: "1.1rem 1.4rem",
-                borderBottom: "1px solid #e8ecf0",
-                background: "linear-gradient(90deg,#ffffff,#f8fafd)",
+                borderTop: `2px solid ${isDarkTheme() ? "#475569" : "#cbd5e1"}`,
+                borderBottom: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
+                background: isDarkTheme()
+                  ? "linear-gradient(90deg,#1e293b,#162032)"
+                  : "linear-gradient(90deg,#ffffff,#f8fafd)",
               }}
             >
               <span
@@ -671,7 +682,7 @@ export function DnsChangesPage() {
                   width: 38,
                   height: 38,
                   borderRadius: "50%",
-                  background: "#fff7e0",
+                  background: isDarkTheme() ? "#3b2f0d" : "#fff7e0",
                   color: "#d97706",
                   display: "inline-flex",
                   alignItems: "center",
@@ -689,7 +700,7 @@ export function DnsChangesPage() {
                     margin: 0,
                     fontSize: "1rem",
                     fontWeight: 700,
-                    color: "#0d1b3e",
+                    color: isDarkTheme() ? "#e2e8f0" : "#0d1b3e",
                   }}
                 >
                   Cancel DNS Change
@@ -698,7 +709,7 @@ export function DnsChangesPage() {
                   style={{
                     marginTop: 2,
                     fontSize: "0.75rem",
-                    color: "#64748b",
+                    color: isDarkTheme() ? "#94a3b8" : "#64748b",
                   }}
                 >
                   This action cannot be undone
@@ -711,7 +722,7 @@ export function DnsChangesPage() {
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#64748b",
+                  color: isDarkTheme() ? "#94a3b8" : "#64748b",
                   fontSize: "1rem",
                   cursor: "pointer",
                   padding: "0.25rem 0.5rem",
@@ -727,7 +738,7 @@ export function DnsChangesPage() {
               style={{
                 padding: "1.25rem 1.4rem",
                 fontSize: "0.9rem",
-                color: "#334155",
+                color: isDarkTheme() ? "#cbd5e1" : "#334155",
                 lineHeight: 1.6,
               }}
             >
@@ -736,8 +747,8 @@ export function DnsChangesPage() {
                 style={{
                   marginTop: "0.75rem",
                   padding: "0.6rem 0.85rem",
-                  background: "#f8fafd",
-                  border: "1px solid #e2e8f0",
+                  background: isDarkTheme() ? "#0f172a" : "#f8fafd",
+                  border: `1px solid ${isDarkTheme() ? "#2d4163" : "#e2e8f0"}`,
                   borderRadius: "0.5rem",
                 }}
               >
@@ -745,7 +756,7 @@ export function DnsChangesPage() {
                   style={{
                     fontFamily: "ui-monospace,SFMono-Regular,Menlo,monospace",
                     fontSize: "0.78rem",
-                    color: "#1e5fa8",
+                    color: isDarkTheme() ? "#7fa8d8" : "#1e5fa8",
                     wordBreak: "break-all",
                   }}
                 >
@@ -755,7 +766,7 @@ export function DnsChangesPage() {
                   style={{
                     marginTop: "0.4rem",
                     fontSize: "0.78rem",
-                    color: "#64748b",
+                    color: isDarkTheme() ? "#94a3b8" : "#64748b",
                   }}
                 >
                   Submitted {formatDateTime(cancelTarget.createdTimestamp)}
@@ -765,7 +776,7 @@ export function DnsChangesPage() {
                     style={{
                       marginTop: "0.25rem",
                       fontSize: "0.78rem",
-                      color: "#64748b",
+                      color: isDarkTheme() ? "#94a3b8" : "#64748b",
                     }}
                   >
                     {cancelTarget.comments}
@@ -781,8 +792,8 @@ export function DnsChangesPage() {
                 justifyContent: "flex-end",
                 gap: "0.6rem",
                 padding: "0.9rem 1.4rem",
-                borderTop: "1px solid #e8ecf0",
-                background: "#f8fafd",
+                borderTop: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
+                background: isDarkTheme() ? "#162032" : "#f8fafd",
               }}
             >
               <button
@@ -791,12 +802,29 @@ export function DnsChangesPage() {
                 style={{
                   padding: "0.5rem 1.1rem",
                   background: "transparent",
-                  border: "1px solid #d4dbe8",
-                  color: "#334155",
+                  border: isDarkTheme()
+                    ? "1px solid #4a6fa5"
+                    : "1px solid #d4dbe8",
+                  color: isDarkTheme() ? "#93c5fd" : "#334155",
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.85rem",
                   fontWeight: 500,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isDarkTheme()
+                    ? "#1e3a5f"
+                    : "#f0f4f9";
+                  e.currentTarget.style.borderColor = isDarkTheme()
+                    ? "#5a82bb"
+                    : "#c2c9d3";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderColor = isDarkTheme()
+                    ? "#4a6fa5"
+                    : "#d4dbe8";
                 }}
               >
                 Keep DNS Change
@@ -817,6 +845,15 @@ export function DnsChangesPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 6px 20px rgba(220,38,38,0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(220,38,38,0.35)";
                 }}
               >
                 <i className="bi bi-x-circle-fill" />
