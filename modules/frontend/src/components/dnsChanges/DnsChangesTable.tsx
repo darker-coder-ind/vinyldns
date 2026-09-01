@@ -265,7 +265,7 @@ export function DnsChangesTable({
                       <i className="bi bi-eye" />
                       <span>View</span>
                     </Link>
-                    {onCancel && (
+                    {canCancel && onCancel && (
                       <button
                         type="button"
                         className="vds-ubtn vds-ubtn--danger-outline vds-ubtn--sm"

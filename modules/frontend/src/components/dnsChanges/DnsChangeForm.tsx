@@ -324,6 +324,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="e.g. 1.1.1.1"
+          autoComplete="off"
           style={inputStyle}
           {...register(`changes.${index}.record.address`, {
             required: req ? "Record data is required" : false,
@@ -338,6 +339,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="fd69:27cc::60"
+          autoComplete="off"
           style={inputStyle}
           {...register(`changes.${index}.record.address`, {
             required: req ? "Record data is required" : false,
@@ -351,6 +353,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="target.example.com."
+          autoComplete="off"
           disabled={!isAdd}
           style={{
             ...inputStyle,
@@ -372,6 +375,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="test.example.com."
+          autoComplete="off"
           style={inputStyle}
           {...register(`changes.${index}.record.ptrdname`, {
             required: req ? "Record data is required" : false,
@@ -385,6 +389,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="attr=val"
+          autoComplete="off"
           style={inputStyle}
           {...register(`changes.${index}.record.text`, {
             required: req ? "Record data is required" : false,
@@ -425,6 +430,7 @@ function RecordDataFields({
         <input
           className="form-control form-control-sm"
           placeholder="ns1.example.com."
+          autoComplete="off"
           style={inputStyle}
           {...register(`changes.${index}.record.nsdname`, {
             required: req ? "Record data is required" : false,
@@ -475,6 +481,7 @@ function RecordDataFields({
           <input
             className="form-control form-control-sm"
             placeholder="target.example.com."
+            autoComplete="off"
             style={inputStyle}
             {...register(`changes.${index}.record.target`, {
               required: req ? "Record data is required" : false,
@@ -532,6 +539,7 @@ function RecordDataFields({
           <input
             className="form-control form-control-sm"
             placeholder="SIP+D2U"
+            autoComplete="off"
             style={{ ...inputStyle, width: 90 }}
             {...register(`changes.${index}.record.service`, {
               required: req ? "Record data is required" : false,
@@ -540,12 +548,14 @@ function RecordDataFields({
           <input
             className="form-control form-control-sm"
             placeholder="Regexp"
+            autoComplete="off"
             style={{ ...inputStyle, width: 80 }}
             {...register(`changes.${index}.record.regexp`)}
           />
           <input
             className="form-control form-control-sm"
             placeholder="Replacement"
+            autoComplete="off"
             style={inputStyle}
             {...register(`changes.${index}.record.replacement`, {
               required: req ? "Record data is required" : false,
@@ -621,8 +631,7 @@ function ChangeRow({
 
   const cellStyle: React.CSSProperties = {
     padding: "0.3rem 0.4rem",
-    verticalAlign: "middle",
-    borderBottom: `1px solid ${hasErrors ? (isDark ? "#7f1d1d" : "#f1aeb5") : isDark ? "#2d3d52" : "#e8ecf0"}`,
+    verticalAlign: "top",
     background: hasErrors ? (isDark ? "#1e0a0a" : "#fff8f8") : "transparent",
   };
 
@@ -692,42 +701,47 @@ function ChangeRow({
 
       {/* Input Name */}
       <td style={{ ...cellStyle, minWidth: 200 }}>
-        <input
-          className="form-control form-control-sm"
-          placeholder={isPtr ? "192.0.2.193" : "host.example.com."}
-          aria-invalid={
-            errors?.changes?.[index]?.inputName ? "true" : undefined
-          }
-          style={{
-            ...inputStyle,
-            borderColor: inputStyle.borderColor,
-          }}
-          {...register(`changes.${index}.inputName`, {
-            required: "Input Name is required",
-            validate: (v) => {
-              if (!v) return true;
-              if (isPtr)
-                return RE_IPV4.test(v) || RE_IPV6.test(v) || "Invalid IP";
-              return RE_FQDN.test(v) || "Invalid FQDN";
-            },
-          })}
-        />
-        {errors?.changes?.[index]?.inputName && (
-          <div
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <input
+            className="form-control form-control-sm"
+            placeholder={isPtr ? "192.0.2.193" : "host.example.com."}
+            autoComplete="off"
+            aria-invalid={
+              errors?.changes?.[index]?.inputName ? "true" : undefined
+            }
             style={{
-              fontSize: "0.72rem",
-              color: "#dc3545",
-              marginTop: 3,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
+              ...inputStyle,
+              borderColor: inputStyle.borderColor,
             }}
-          >
-            <i className="bi bi-exclamation-circle-fill" />
-            {errors.changes[index]?.inputName?.message ||
-              "Input Name is required"}
-          </div>
-        )}
+            {...register(`changes.${index}.inputName`, {
+              required: "Input Name is required",
+              validate: (v) => {
+                if (!v) return true;
+                if (isPtr)
+                  return RE_IPV4.test(v) || RE_IPV6.test(v) || "Invalid IP";
+                return RE_FQDN.test(v) || "Invalid FQDN";
+              },
+            })}
+          />
+          {errors?.changes?.[index]?.inputName && (
+            <div
+              style={{
+                fontSize: "0.72rem",
+                color: "#dc3545",
+                marginTop: "3px",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <i className="bi bi-exclamation-circle-fill" />
+              {errors.changes[index]?.inputName?.message ||
+                "Input Name is required"}
+            </div>
+          )}
+        </div>
       </td>
 
       {/* TTL */}
@@ -736,6 +750,7 @@ function ChangeRow({
           type="number"
           className="form-control form-control-sm"
           placeholder=""
+          autoComplete="off"
           disabled={!isAdd}
           min={30}
           max={2147483647}
@@ -753,35 +768,39 @@ function ChangeRow({
 
       {/* Record Data */}
       <td style={{ ...cellStyle }}>
-        <RecordDataFields
-          index={index}
-          recordType={recordType}
-          isAdd={isAdd}
-          isDark={isDark}
-        />
-        {(() => {
-          const recordErrors = errors?.changes?.[index]?.record as
-            Record<string, { message?: string } | undefined> | undefined;
-          const recordErrorMessage = Object.values(recordErrors ?? {}).find(
-            (value) => value && typeof value === "object" && "message" in value,
-          )?.message;
-
-          return recordErrorMessage ? (
-            <div
-              style={{
-                fontSize: "0.72rem",
-                color: "#dc3545",
-                marginTop: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              <i className="bi bi-exclamation-circle-fill" />
-              {recordErrorMessage}
-            </div>
-          ) : null;
-        })()}
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <RecordDataFields
+            index={index}
+            recordType={recordType}
+            isAdd={isAdd}
+            isDark={isDark}
+          />
+          {(() => {
+            const recordErrors = errors?.changes?.[index]?.record as
+              Record<string, { message?: string } | undefined> | undefined;
+            const recordErrorMessage = Object.values(recordErrors ?? {}).find(
+              (value) =>
+                value && typeof value === "object" && "message" in value,
+            )?.message;
+            return recordErrorMessage ? (
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  color: "#dc3545",
+                  marginTop: "3px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <i className="bi bi-exclamation-circle-fill" />
+                {recordErrorMessage}
+              </div>
+            ) : null;
+          })()}
+        </div>
       </td>
 
       {serverErrors && serverErrors.length > 0 && (
@@ -2261,11 +2280,17 @@ export function DnsChangeForm({
                 </span>
                 <br />
                 <span style={{ fontSize: "0.78rem" }}>
-                  Click <strong>Add Row</strong> to get started
+                  Click <strong>Add Change</strong> to get started
                 </span>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
+              <div
+                style={{
+                  overflowX: "auto",
+                  overflowY: "auto",
+                  maxHeight: "calc(100vh - 500px)",
+                }}
+              >
                 <table
                   style={{
                     width: "100%",
@@ -2293,7 +2318,6 @@ export function DnsChangeForm({
                             textTransform: "uppercase",
                             letterSpacing: "0.04em",
                             color: isDark ? "#64748b" : "#64748b",
-                            borderBottom: `2px solid ${isDark ? "#2d3d52" : "#e2e8f0"}`,
                             background: isDark ? "#1a2536" : "#f8fafd",
                             whiteSpace: "nowrap",
                           }}
@@ -2323,15 +2347,18 @@ export function DnsChangeForm({
         {/* ── Footer Actions ────────────────────────────────────── */}
         <div
           style={{
-            paddingTop: "1rem",
-            borderTop: `1px solid ${isDark ? "#2d4163" : "#e8ecf0"}`,
+            paddingTop: "0.1rem",
+            paddingBottom: "0",
+            position: "sticky",
+            bottom: 0,
+            backgroundColor: isDark ? "#0f172a" : "#ffffff",
+            zIndex: 10,
           }}
         >
           {pendingSubmitData ? (
-            // Two-step confirmation panel — matches AngularJS pendingConfirm step.
-            <div>
+            <div style={{ padding: "0.05rem 0 0.5rem 0" }}>
               <div
-                className="d-flex align-items-center gap-2 p-3 mb-3"
+                className="d-flex align-items-center gap-2 p-2 mb-2"
                 style={{
                   background: isDark
                     ? "rgba(255,193,7,0.08)"
@@ -2405,7 +2432,10 @@ export function DnsChangeForm({
               </div>
             </div>
           ) : (
-            <div className="d-flex align-items-center gap-2">
+            <div
+              className="d-flex align-items-center gap-2"
+              style={{ padding: "0.25rem 0 0 0" }}
+            >
               <button
                 type="submit"
                 className="vds-ubtn vds-ubtn--primary"
@@ -2436,7 +2466,13 @@ export function DnsChangeForm({
               <button
                 type="button"
                 className="vds-ubtn vds-ubtn--secondary"
-                onClick={onCancel}
+                onClick={() => {
+                  if (hasMeaningfulDiscardData(allChanges)) {
+                    setShowCancelConfirm(true);
+                  } else {
+                    onCancel();
+                  }
+                }}
                 disabled={isSubmitting}
               >
                 Cancel
