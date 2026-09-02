@@ -474,6 +474,7 @@ export function DnsChangeDetailPage() {
       const res = await dnsChangeService.getBatchChange(id);
       return res.data;
     },
+    refetchOnWindowFocus: false, // don't refetch when switching tabs
     enabled: Boolean(id),
   });
 

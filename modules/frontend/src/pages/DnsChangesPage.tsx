@@ -68,7 +68,6 @@ export function DnsChangesPage() {
 
   // ── Toolbar visibility ───────────────────────────────────────────────────
   const [showCards, setShowCards] = useState(true);
-  const [showFilters, setShowFilters] = useState(true);
 
   // ── Time filter (client-side) ─────────────────────────────────────────────
   const [changeTimeRange, setChangeTimeRange] = useState<TimeRange>("all");
@@ -142,6 +141,7 @@ export function DnsChangesPage() {
         return res.data;
       },
       retry: false, // don't retry on 404 (endpoint not yet deployed)
+      refetchOnWindowFocus: false, // don't refetch when switching tabs
       staleTime: 120_000, // reuse cached counts for 2 min between navigations
       gcTime: 180_000, // keep in memory for 3 min after last subscriber
     });
@@ -241,10 +241,13 @@ export function DnsChangesPage() {
 
       <div className="card mb-3 vds-toolbar-card">
         <div className="card-body py-2 px-3">
-          {/* ── Top row: tab pills left · cards/filters toggles + refresh right ── */}
-          <div className="d-flex align-items-center gap-2">
+          {/* ── Toolbar: request scope left; filters and actions right ─────── */}
+          <div
+            className="d-flex align-items-center gap-2"
+            style={{ minWidth: 0, width: "100%" }}
+          >
             {canReview && (
-              <div className="vds-pill-toggle">
+              <div className="vds-pill-toggle" style={{ flex: "0 0 auto" }}>
                 <button
                   type="button"
                   className={`vds-pill-toggle__btn${activeTab === "my" ? " vds-pill-toggle__btn--active" : ""}`}
@@ -264,36 +267,86 @@ export function DnsChangesPage() {
               </div>
             )}
 
-            <div className="ms-auto d-flex align-items-center gap-2">
-              <button
-                className="vds-cards-toggle-btn"
-                onClick={() => setShowCards((v) => !v)}
-              >
-                <span className="vds-cards-toggle-btn__icon">
-                  <i
-                    className={`bi ${showCards ? "bi-grid-fill" : "bi-grid"}`}
+            <div
+              className="ms-auto d-flex align-items-center justify-content-end gap-2"
+              style={{ minWidth: 0, flex: "1 1 auto", overflow: "hidden" }}
+            >
+              {ignoreAccess && (
+                <div
+                  className="vds-search-group input-group input-group-sm"
+                  style={{
+                    flex: "1 1 120px",
+                    minWidth: 120,
+                    overflow: "hidden",
+                  }}
+                >
+                  <span className="input-group-text border-0 bg-transparent pe-1">
+                    <i className="bi bi-person text-muted" />
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control border-0 ps-0 shadow-none bg-transparent"
+                    placeholder="Search by username"
+                    value={submitterName}
+                    onChange={(e) => setSubmitterName(e.target.value)}
                   />
-                </span>
-                <span>{showCards ? "Hide Cards" : "Show Cards"}</span>
-                <span
-                  className={`vds-cards-toggle-btn__dot${showCards ? "" : " vds-cards-toggle-btn__dot--off"}`}
-                />
-              </button>
+                  {submitterName && (
+                    <button
+                      type="button"
+                      className="input-group-text border-0 bg-transparent pe-1"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => setSubmitterName("")}
+                    >
+                      <i className="bi bi-x text-muted" />
+                    </button>
+                  )}
+                </div>
+              )}
+
               <button
                 type="button"
-                className="vds-cards-toggle-btn"
-                onClick={() => setShowFilters((v) => !v)}
+                className={`btn btn-sm d-flex align-items-center gap-1 vds-btn-flat${approvalStatus === "PendingReview" ? " vds-btn-flat--active" : ""}`}
+                onClick={() =>
+                  setApprovalStatus(
+                    approvalStatus === "PendingReview" ? "" : "PendingReview",
+                  )
+                }
+                style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
               >
-                <span className="vds-cards-toggle-btn__icon">
-                  <i
-                    className={`bi ${showFilters ? "bi-x-lg" : "bi-sliders"}`}
-                  />
-                </span>
-                <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-                <span
-                  className={`vds-cards-toggle-btn__dot${showFilters ? "" : " vds-cards-toggle-btn__dot--off"}`}
-                />
+                <i className="bi bi-hourglass-split" />
+                <span className="vds-btn-flat__label">Open Only</span>
+                {approvalStatus === "PendingReview" && (
+                  <span className="vds-filter-chip--accent">On</span>
+                )}
               </button>
+
+              <TimeFilterDropdown
+                value={changeTimeRange}
+                dateFrom={changeDateFrom}
+                dateTo={changeDateTo}
+                onChange={setChangeTimeRange}
+                onDateFromChange={setChangeDateFrom}
+                onDateToChange={setChangeDateTo}
+              />
+
+              {canReview && (
+                <button
+                  type="button"
+                  className="vds-cards-toggle-btn"
+                  onClick={() => setShowCards((v) => !v)}
+                  style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
+                >
+                  <span className="vds-cards-toggle-btn__icon">
+                    <i
+                      className={`bi ${showCards ? "bi-grid-fill" : "bi-grid"}`}
+                    />
+                  </span>
+                  <span>{showCards ? "Hide Cards" : "Show Cards"}</span>
+                  <span
+                    className={`vds-cards-toggle-btn__dot${showCards ? "" : " vds-cards-toggle-btn__dot--off"}`}
+                  />
+                </button>
+              )}
               <button
                 type="button"
                 className="btn btn-sm vds-btn-flat d-flex align-items-center justify-content-center"
@@ -314,95 +367,11 @@ export function DnsChangesPage() {
               </button>
             </div>
           </div>
-
-          {/* ── Animated filters row ── */}
-          <div
-            className="d-flex align-items-center"
-            style={{
-              minHeight: showFilters ? 32 : 0,
-              paddingTop: showFilters ? "0.5rem" : "0",
-              transition:
-                "min-height 0.4s cubic-bezier(0.4,0,0.2,1), padding-top 0.4s cubic-bezier(0.4,0,0.2,1)",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxHeight: showFilters ? "120px" : "0px",
-                opacity: showFilters ? 1 : 0,
-                overflow: showFilters ? "visible" : "hidden",
-                transition:
-                  "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
-              }}
-            >
-              <div
-                className="d-flex align-items-center justify-content-end gap-2"
-                style={{ width: "100%" }}
-              >
-                {ignoreAccess && (
-                  <div
-                    className="vds-search-group input-group input-group-sm"
-                    style={{
-                      flex: "0 0 320px",
-                      minWidth: 120,
-                      maxWidth: 320,
-                    }}
-                  >
-                    <span className="input-group-text border-0 bg-transparent pe-1">
-                      <i className="bi bi-person text-muted" />
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control border-0 ps-0 shadow-none bg-transparent"
-                      placeholder="Search by username"
-                      value={submitterName}
-                      onChange={(e) => setSubmitterName(e.target.value)}
-                    />
-                    {submitterName && (
-                      <button
-                        type="button"
-                        className="input-group-text border-0 bg-transparent pe-1"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setSubmitterName("")}
-                      >
-                        <i className="bi bi-x text-muted" />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className={`btn btn-sm d-flex align-items-center gap-1 vds-btn-flat${approvalStatus === "PendingReview" ? " vds-btn-flat--active" : ""}`}
-                  onClick={() =>
-                    setApprovalStatus(
-                      approvalStatus === "PendingReview" ? "" : "PendingReview",
-                    )
-                  }
-                >
-                  <i className="bi bi-hourglass-split" />
-                  <span className="vds-btn-flat__label">Open Only</span>
-                  {approvalStatus === "PendingReview" && (
-                    <span className="vds-filter-chip--accent">On</span>
-                  )}
-                </button>
-
-                <TimeFilterDropdown
-                  value={changeTimeRange}
-                  dateFrom={changeDateFrom}
-                  dateTo={changeDateTo}
-                  onChange={setChangeTimeRange}
-                  onDateFromChange={setChangeDateFrom}
-                  onDateToChange={setChangeDateTo}
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* ── Insight cards ── */}
-      {showCards && (
+      {canReview && showCards && (
         <div className="row g-2 mb-3 align-items-stretch">
           {/* Card 1: Total Requests */}
           <div className="col-6 col-sm-4 col-xl d-flex">
@@ -611,17 +580,16 @@ export function DnsChangesPage() {
         <LoadingSpinner message="Loading changes…" />
       ) : (
         <PaginatedSection
-          show={(prevPageEnabled || nextPageEnabled) && dnsChanges.length > 0}
+          show={dnsChanges.length > 0}
           onPrev={prevPage}
           onNext={nextPage}
           prevEnabled={prevPageEnabled}
           nextEnabled={nextPageEnabled}
           rangeLabel={
             dnsChanges.length > 0
-              ? `${(currentPage - 1) * pageSize + 1}–${(currentPage - 1) * pageSize + dnsChanges.length}`
+              ? `${(currentPage - 1) * pageSize + 1}–${(currentPage - 1) * pageSize + dnsChanges.length} of ${cardTotal > 0 ? cardTotal : (currentPage - 1) * pageSize + dnsChanges.length}`
               : undefined
           }
-          totalCount={cardTotal > 0 ? cardTotal : undefined}
         >
           <DnsChangesTable
             changes={displayedChanges}
