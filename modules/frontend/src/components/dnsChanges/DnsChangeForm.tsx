@@ -95,7 +95,7 @@ const BATCH_CHANGE_LIMIT = 1000;
 
 /**
  * IPv4 address validation pattern. Matches only dotted-decimal notation with
- * each octet in the 0–255 range, matching the AngularJS `ipv4` directive.
+ * each octet in the 0–255 range.
  */
 const RE_IPV4 =
   /^(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/;
@@ -103,7 +103,6 @@ const RE_IPV4 =
 /**
  * IPv6 address validation pattern covering all standard address forms including
  * compressed (::), mixed IPv4/IPv6, and link-local addresses with zone IDs.
- * Matches the AngularJS `ipv6` directive.
  */
 const RE_IPV6 =
   /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
@@ -111,7 +110,7 @@ const RE_IPV6 =
 /**
  * FQDN validation pattern. Allows an optional leading wildcard label (`*.`)
  * and requires each label to be 1–63 alphanumeric/hyphen characters. An
- * optional trailing dot is permitted. Matches the AngularJS `fqdn` directive.
+ * optional trailing dot is permitted.
  */
 const RE_FQDN =
   /^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+([a-zA-Z]{2,}\.?)$/;
@@ -1571,8 +1570,7 @@ export function DnsChangeForm({
   }, []);
 
   // Fetch the user's groups to populate the owner group ID selector.
-  // ignoreAccess=true mirrors the AngularJS groupsService.getGroups() call
-  // which returns all groups the user can see, not just their own.
+  // ignoreAccess=true
   const { data: groupsData, isLoading: isGroupsLoading } = useQuery({
     queryKey: ["groups-for-dns-form"],
     queryFn: async () => {
@@ -1660,7 +1658,7 @@ export function DnsChangeForm({
   }, [allChanges]);
 
   // Auto-focus the Change Type select of the newly added row whenever a row
-  // is appended. This mirrors the AngularJS addSingleChange() focus behavior.
+  // is appended.
   useEffect(() => {
     if (fields.length > prevFieldsLengthRef.current) {
       const rows = document.querySelectorAll<HTMLElement>(
@@ -1776,8 +1774,7 @@ export function DnsChangeForm({
 
     // Stage the payload for user confirmation rather than submitting immediately.
     // The confirmation panel will display the change count and let the user
-    // back out before the API call is made. This mirrors the AngularJS two-step
-    // pendingSubmit → pendingConfirm flow.
+    // back out before the API call is made. 
     setPendingSubmitData({
       data: {
         comments: data.comments || undefined,

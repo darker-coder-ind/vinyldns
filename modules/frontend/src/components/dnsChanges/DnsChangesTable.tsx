@@ -20,6 +20,36 @@ import type { DnsChangeSummary } from "../../types/dnsChange";
 import type { PagingState } from "../../types/common";
 import { formatDateTime } from "../../utils/dateUtils";
 
+type SortDir = "asc" | "desc" | null;
+
+function SortArrow({ dir }: { dir: SortDir }) {
+  if (dir === "asc")
+    return (
+      <i
+        className="bi bi-arrow-up"
+        style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
+      />
+    );
+  if (dir === "desc")
+    return (
+      <i
+        className="bi bi-arrow-down"
+        style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
+      />
+    );
+  return (
+    <i
+      className="bi bi-arrow-down-up"
+      style={{
+        fontSize: "0.65rem",
+        color: "#898a8b",
+        marginLeft: 3,
+        opacity: 0.7,
+      }}
+    />
+  );
+}
+
 /**
  * Props for DnsChangesTable.
  *
@@ -98,6 +128,9 @@ export function DnsChangesTable({
   currentPaging,
 }: DnsChangesTableProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sortState, setSortState] = useState<{ dir: "asc" | "desc" } | null>(
+    null,
+  );
 
   const handleCopyId = (id: string) => {
     void navigator.clipboard.writeText(id).then(() => {
@@ -105,6 +138,28 @@ export function DnsChangesTable({
       setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000);
     });
   };
+
+  const toggleSort = () =>
+    setSortState((prev) =>
+      prev === null
+        ? { dir: "asc" }
+        : prev.dir === "asc"
+          ? { dir: "desc" }
+          : null,
+    );
+
+  const sortDir: SortDir = sortState === null ? null : sortState.dir;
+
+  const sortedChanges = sortState
+    ? [...changes].sort((a, b) => {
+        const dir = sortState.dir === "asc" ? 1 : -1;
+        return (
+          dir *
+          (new Date(a.createdTimestamp).getTime() -
+            new Date(b.createdTimestamp).getTime())
+        );
+      })
+    : changes;
 
   if (changes.length === 0) {
     return (
@@ -136,12 +191,21 @@ export function DnsChangesTable({
             <th>CHANGES</th>
             <th>STATUS</th>
             <th>DESCRIPTION</th>
-            <th>SUBMITTED</th>
+            <th
+              onClick={toggleSort}
+              style={{
+                cursor: "pointer",
+                userSelect: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              SUBMITTED <SortArrow dir={sortDir} />
+            </th>
             <th>ACTIONS</th>
           </tr>
         </thead>
         <tbody>
-          {changes.map((change) => {
+          {sortedChanges.map((change) => {
             // Cancel is owner-only — the API rejects cancel attempts from
             // anyone other than the original submitter, even super users.
             const isPendingReview =

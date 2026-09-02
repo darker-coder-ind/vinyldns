@@ -39,8 +39,7 @@ import { renderWithProviders } from "../../utils/renderWithProviders";
  * `DnsChangeForm.helpers.test.ts`. This file targets the page-level UX:
  * default row, add / remove, submit two-step confirmation, and serverRowErrors.
  *
- * Note: the form initializes with ONE default row already present (matches
- * AngularJS legacy behavior of always offering at least one editable line).
+ * Note: the form initializes with ONE default row already present.
  */
 describe("<DnsChangeForm /> render + interaction", () => {
   beforeEach(() => {

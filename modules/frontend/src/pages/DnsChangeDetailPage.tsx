@@ -801,7 +801,6 @@ export function DnsChangeDetailPage() {
         </div>
       )}
 
-      {/* PendingReview notice — mirrors the Angular portal's dns-change-notices config entry */}
       {isPendingReview && (
         <div
           role="alert"
