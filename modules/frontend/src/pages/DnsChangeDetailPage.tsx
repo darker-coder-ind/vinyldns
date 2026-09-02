@@ -991,10 +991,11 @@ export function DnsChangeDetailPage() {
           }}
         >
           <table
-            className="vds-zones-table vds-dns-change-detail-table"
+            className="vds-zones-table"
             style={{
               width: "100%",
               borderRadius: 0,
+              tableLayout: "auto",
             }}
           >
             <thead>
