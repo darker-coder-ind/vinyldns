@@ -26,14 +26,14 @@ function SortArrow({ dir }: { dir: SortDir }) {
   if (dir === "asc")
     return (
       <i
-        className="bi bi-arrow-up"
+        className="bi bi-arrow-up vds-sort-arrow"
         style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
       />
     );
   if (dir === "desc")
     return (
       <i
-        className="bi bi-arrow-down"
+        className="bi bi-arrow-down vds-sort-arrow"
         style={{ fontSize: "0.7rem", color: "#2e5090", marginLeft: 3 }}
       />
     );
