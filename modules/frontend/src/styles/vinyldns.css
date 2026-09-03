@@ -279,7 +279,7 @@
    When collapsed, tooltips appear to the right of the sidebar.
    ============================================================ */
 
-/* Lift overflow on sidebar so tooltips escape the collapsed 64px width */
+/* Lift overflow on sidebar so tooltips escape the collapsed 92px width */
 .vds-sidebar--collapsed {
   overflow: visible;
 }
@@ -1144,13 +1144,39 @@ h1.h3 {
 }
 
 .vds-sidebar--collapsed {
-  width: 64px;
-  min-width: 64px;
+  width: 92px;
+  min-width: 92px;
 }
 
 /* ---- Nav list gap ---- */
 .vds-nav-list {
   gap: 2px;
+}
+
+.vds-sidebar--collapsed .vds-nav-list {
+  gap: 6px;
+}
+
+/* ---- Collapsed nav item: icon stacked above wrapped label ---- */
+.vds-nav-link.vds-nav-link--collapsed {
+  justify-content: center;
+  padding: 10px 4px !important;
+  gap: 4px;
+  text-align: center;
+}
+.vds-nav-link--collapsed .vds-nav-icon {
+  font-size: 1.3rem;
+  width: auto;
+}
+.vds-nav-link--collapsed .vds-nav-text {
+  margin-left: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  text-align: center;
+  font-size: 0.66rem;
+  line-height: 1.2;
+  max-width: 100%;
 }
 
 /* ---- Section spacers (collapsed mode) ---- */
