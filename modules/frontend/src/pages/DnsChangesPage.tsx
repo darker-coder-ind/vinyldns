@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DnsChangesTable } from "../components/dnsChanges/DnsChangesTable";
@@ -177,7 +177,7 @@ export function DnsChangesPage() {
     to: string,
   ): boolean => {
     if (range === "all") return true;
-    if (!dateStr) return false;  // Exclude entries with no date when filtering by date range
+    if (!dateStr) return false; // Exclude entries with no date when filtering by date range
     const ts = new Date(dateStr).getTime();
     const now = Date.now();
     if (range === "1d") return ts >= now - 86400000;
@@ -313,7 +313,7 @@ export function DnsChangesPage() {
                 }
                 style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
               >
-                <i className="bi bi-hourglass-split" />
+                <i className="bi bi-hourglass-split" />{" "}
                 <span className="vds-btn-flat__label">Open Only</span>
                 {approvalStatus === "PendingReview" && (
                   <span className="vds-filter-chip--accent">On</span>
@@ -623,8 +623,8 @@ export function DnsChangesPage() {
         >
           <div
             style={{
-              background: isDarkTheme() ? "#1e293b" : "#ffffff",
-              border: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
+              background: isDarkTheme() ? "#161618" : "#ffffff",
+              border: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
               borderRadius: "0.85rem",
               boxShadow: "0 25px 60px rgba(0,0,0,0.45)",
               width: "min(460px, 100%)",
@@ -638,11 +638,9 @@ export function DnsChangesPage() {
                 alignItems: "center",
                 gap: "0.85rem",
                 padding: "1.1rem 1.4rem",
-                borderTop: `2px solid ${isDarkTheme() ? "#475569" : "#cbd5e1"}`,
-                borderBottom: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
-                background: isDarkTheme()
-                  ? "linear-gradient(90deg,#1e293b,#162032)"
-                  : "linear-gradient(90deg,#ffffff,#f8fafd)",
+                borderTop: `2px solid ${isDarkTheme() ? "#333333" : "#cbd5e1"}`,
+                borderBottom: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
+                background: isDarkTheme() ? "#161618" : "#ffffff",
               }}
             >
               <span
@@ -668,7 +666,7 @@ export function DnsChangesPage() {
                     margin: 0,
                     fontSize: "1rem",
                     fontWeight: 700,
-                    color: isDarkTheme() ? "#e2e8f0" : "#0d1b3e",
+                    color: isDarkTheme() ? "#ffffff" : "#0d1b3e",
                   }}
                 >
                   Cancel DNS Change
@@ -706,7 +704,7 @@ export function DnsChangesPage() {
               style={{
                 padding: "1.25rem 1.4rem",
                 fontSize: "0.9rem",
-                color: isDarkTheme() ? "#cbd5e1" : "#334155",
+                color: isDarkTheme() ? "#f5f5f5" : "#334155",
                 lineHeight: 1.6,
               }}
             >
@@ -715,8 +713,8 @@ export function DnsChangesPage() {
                 style={{
                   marginTop: "0.75rem",
                   padding: "0.6rem 0.85rem",
-                  background: isDarkTheme() ? "#0f172a" : "#f8fafd",
-                  border: `1px solid ${isDarkTheme() ? "#2d4163" : "#e2e8f0"}`,
+                  background: isDarkTheme() ? "#000000" : "#f8fafd",
+                  border: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e2e8f0"}`,
                   borderRadius: "0.5rem",
                 }}
               >
@@ -724,7 +722,7 @@ export function DnsChangesPage() {
                   style={{
                     fontFamily: "ui-monospace,SFMono-Regular,Menlo,monospace",
                     fontSize: "0.78rem",
-                    color: isDarkTheme() ? "#7fa8d8" : "#1e5fa8",
+                    color: isDarkTheme() ? "#ffffff" : "#1e5fa8",
                     wordBreak: "break-all",
                   }}
                 >
@@ -760,8 +758,8 @@ export function DnsChangesPage() {
                 justifyContent: "flex-end",
                 gap: "0.6rem",
                 padding: "0.9rem 1.4rem",
-                borderTop: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
-                background: isDarkTheme() ? "#162032" : "#f8fafd",
+                borderTop: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
+                background: isDarkTheme() ? "#161618" : "#f8fafd",
               }}
             >
               <button
@@ -773,7 +771,7 @@ export function DnsChangesPage() {
                   border: isDarkTheme()
                     ? "1px solid #4a6fa5"
                     : "1px solid #d4dbe8",
-                  color: isDarkTheme() ? "#93c5fd" : "#334155",
+                  color: isDarkTheme() ? "#ffffff" : "#334155",
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.85rem",
@@ -802,7 +800,7 @@ export function DnsChangesPage() {
                 onClick={handleConfirmCancel}
                 style={{
                   padding: "0.5rem 1.25rem",
-                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                  background: "#dc2626",
                   border: "none",
                   color: "#fff",
                   borderRadius: "0.5rem",

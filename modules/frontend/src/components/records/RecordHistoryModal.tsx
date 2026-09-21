@@ -31,6 +31,14 @@ interface RecordHistoryModalProps {
  * the change-type badge. Normalized to lowercase to tolerate mixed-case values
  * that may arrive from different API versions.
  */
+export function changeTypeStatusClass(type: string): string {
+  const t = String(type ?? "").toLowerCase();
+  if (t === "create") return "vds-status-text--success";
+  if (t === "delete") return "vds-status-text--danger";
+  if (t === "update") return "vds-status-text--warning";
+  return "vds-status-text--secondary";
+}
+
 export function changeTypeBadgeClass(type: string): string {
   const t = String(type ?? "").toLowerCase();
   if (t === "create") return "vds-change-type-badge--add";
@@ -40,9 +48,9 @@ export function changeTypeBadgeClass(type: string): string {
 }
 
 export function statusBadgeClass(status: string): string {
-  if (status === "Complete") return "vds-status-badge--success";
-  if (status === "Failed") return "vds-status-badge--danger";
-  return "vds-status-badge--warning";
+  if (status === "Complete") return "vds-status-text--success";
+  if (status === "Failed") return "vds-status-text--danger";
+  return "vds-status-text--warning";
 }
 
 /** Detects if dark theme is currently active */
@@ -100,6 +108,7 @@ function changeTypeStyle(type: string): React.CSSProperties {
         ? "0 1px 2px rgba(0,0,0,0.2)"
         : "0 1px 2px rgba(0,0,0,0.06)",
       fontWeight: 600,
+      backgroundColor: "none",
     };
   // delete = Failed (red)
   if (t === "delete")
@@ -373,157 +382,189 @@ export function RecordHistoryModal({
             <div
               className="rhm-header"
               style={{
-                background: "linear-gradient(135deg, #f0f4fa 0%, #ffffff 100%)",
-                borderBottom: "1px solid #dde4ef",
-                padding: "20px 24px 0",
+                background: "#0d0d11",
+                borderBottom: "1px solid #222227",
+                padding: "10px 12px 8px",
               }}
             >
-              <div className="d-flex align-items-start gap-3 pb-3">
-                {/* Icon — matches vds-page-header__icon style */}
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    background: "linear-gradient(90deg, #1e5fa8, #0d1b3e)",
-                    boxShadow: "0 4px 12px rgba(13,27,62,0.35)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <i
-                    className="bi bi-clock-history"
-                    style={{ color: "#fff", fontSize: "1.15rem" }}
-                  />
-                </div>
-
-                {/* Title + subtitle */}
-                <div className="flex-grow-1 min-w-0">
-                  <h5
-                    className="mb-1 fw-bold"
-                    style={{
-                      color: "#0d1b2a",
-                      fontSize: "1rem",
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    Record Change History
-                  </h5>
-                  <div className="d-flex align-items-center gap-2 flex-wrap">
-                    <span
-                      className="small rhm-fqdn"
-                      style={{ color: "#475569" }}
+              {/* Main Header Row */}
+              <div className="d-flex align-items-center justify-content-between gap-3 min-h-100">
+                <div className="d-flex align-items-center gap-3 min-w-0">
+                  {/* Title & FQDN Metadata */}
+                  <div className="min-w-0">
+                    <h5
+                      className="m-0 fw-semibold text-white"
+                      style={{
+                        fontSize: "1.5rem",
+                        letterSpacing: "-0.01em",
+                      }}
                     >
-                      {fqdn}
-                    </span>
-                    {record.type && (
+                      Record Change History
+                    </h5>
+                    <div className="d-flex align-items-center gap-2 mt-1 flex-wrap">
                       <span
-                        className="vds-type-badge"
-                        style={{ fontSize: "0.68rem", padding: "1px 7px" }}
+                        className="small font-monospace px-2"
+                        style={{
+                          fontSize: "0.82rem",
+                          background: "rgba(12, 31, 57, 0.2)",
+                          color: "#93c5fd",
+                          borderRadius: 4,
+                          border: "1px solid rgba(58, 109, 181, 0.4)",
+                        }}
                       >
-                        {String(record.type)}
+                        {fqdn}
                       </span>
-                    )}
+                      {record.type && (
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            background: "rgba(12, 31, 57, 0.2)",
+                            color: "#93c5fd",
+                            border: "1px solid rgba(58, 109, 181, 0.4)",
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          {String(record.type)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Refresh button */}
-                <button
-                  type="button"
-                  className="rhm-header-btn"
-                  aria-label="Refresh"
-                  title="Refresh history"
-                  onClick={() => void refetch()}
-                  disabled={isLoading}
-                >
-                  <i
-                    className={`bi bi-arrow-clockwise rhm-refresh-icon${isLoading ? " rhm-refresh-icon-loading" : ""}`}
-                  />
-                </button>
+                {/* Actions: Refresh & Close */}
+                <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Refresh"
+                    title="Refresh history"
+                    onClick={() => void refetch()}
+                    disabled={isLoading}
+                    className="rhm-header-btn"
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.5)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)")
+                    }
+                  >
+                    <i
+                      className={`bi bi-arrow-clockwise${isLoading ? " rhm-refresh-icon-loading" : ""}`}
+                      style={{ fontSize: "0.95rem" }}
+                    />
+                  </button>
 
-                {/* Close button */}
-                <button
-                  type="button"
-                  className="rhm-header-btn"
-                  aria-label="Close"
-                  onClick={onClose}
-                >
-                  <i className="bi bi-x-lg rhm-close-icon" />
-                </button>
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    onClick={onClose}
+                    className="rhm-header-btn"
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.5)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)")
+                    }
+                  >
+                    <i className="bi bi-x-lg" style={{ fontSize: "0.85rem" }} />
+                  </button>
+                </div>
               </div>
-
-              {/* ID chips — nestled at the bottom of the header above the border */}
-              {(record.id || record.zoneId) && (
-                <div
-                  className="d-flex gap-3 flex-wrap pb-3 rhm-chips-row"
-                  style={{
-                    borderTop: "1px solid rgba(13,27,62,0.08)",
-                    paddingTop: 10,
-                  }}
-                >
+            </div>
+            {/* Modernized Minimalist ID Chips */}
+            {(record.id || record.zoneId) && (
+              <div
+                className="d-flex gap-2 px-2 pt-3 justify-content-between"
+                style={{
+                  borderTop: "1px solid #1c1c22",
+                }}
+              >
+                <div className="d-flex gap-2">
                   {(
                     [
-                      ["Record ID", record.id, "record", "bi-fingerprint"],
-                      ["Zone ID", record.zoneId, "zone", "bi-globe2"],
+                      ["RECORD ID", record.id, "record", "bi-fingerprint"],
+                      ["ZONE ID", record.zoneId, "zone", "bi-globe2"],
                     ] as [string, string, "record" | "zone", string][]
                   ).map(([label, value, key, icon]) =>
                     value ? (
                       <div
                         key={key}
-                        className={`rhm-id-card rhm-id-card--${key}`}
+                        className="d-flex align-items-center gap-2 px-2.5 py-1.5 vds-inner-card"
                       >
-                        {/* Gradient icon bubble */}
-                        <div className="rhm-id-card__icon-wrap">
-                          <i className={`bi ${icon}`} />
-                        </div>
-                        {/* Stacked label + value */}
-                        <div className="rhm-id-card__text">
-                          <span className="rhm-id-card__label">{label}</span>
+                        {/* Label + Monospace Value */}
+                        <div
+                          className="d-flex flex-row gap-2 min-w-0"
+                          style={{ lineHeight: 1.15 }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.65rem",
+                              fontWeight: 600,
+                              letterSpacing: "0.05em",
+                              color: "#a1a1aa",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {label} {":"}
+                          </span>
                           <code
-                            className="rhm-id-card__value"
                             title={String(value)}
+                            style={{
+                              fontSize: "0.75rem",
+                              // color: "#ffffff",
+                              background: "transparent",
+                              padding: 0,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: 220,
+                            }}
                           >
                             {String(value)}
                           </code>
                         </div>
-                        {/* Copy button — unchanged */}
-                        <div className="rhm-id-card__copy">
-                          <button
-                            type="button"
-                            className="rhm-copy-btn"
-                            title={`Copy ${label}`}
-                            style={{
-                              color: copied === key ? "#16a34a" : "#94a3b8",
-                              fontSize: "0.78rem",
-                            }}
-                            onClick={() => void handleCopy(key)}
-                          >
-                            {copied === key ? (
-                              <i
-                                key="check"
-                                className="bi bi-check2"
-                                style={{
-                                  display: "inline-block",
-                                  animation:
-                                    "vdsCopiedCheck 0.35s cubic-bezier(0.175,0.885,0.32,1.275) forwards",
-                                }}
-                              />
-                            ) : (
-                              <i key="copy" className="bi bi-copy" />
-                            )}
-                          </button>
-                        </div>
+
+                        {/* Copy Button */}
+                        <button
+                          type="button"
+                          title={`Copy ${label}`}
+                          onClick={() => void handleCopy(key)}
+                          className={`rhm-copy-btn ${copied === key ? "rhm-copy-btn--copied" : ""}`}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.opacity = "1")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.opacity =
+                              copied === key ? "1" : "0.75")
+                          }
+                        >
+                          {copied === key ? (
+                            <i className="bi bi-check2" />
+                          ) : (
+                            <i className="bi bi-copy" />
+                          )}
+                        </button>
                       </div>
                     ) : null,
                   )}
                 </div>
-              )}
-            </div>
-
+                {(hasPrev || hasMore) && (
+                  <div className="px-3">
+                    <Pagination
+                      onPrev={handlePrev}
+                      onNext={handleNext}
+                      prevEnabled={hasPrev}
+                      nextEnabled={hasMore}
+                      rangeLabel={`${pageIdx * 100 + 1}–${pageIdx * 100 + changes.length}`}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             {/* ── Body ── */}
-            <div className="modal-body p-0">
+            <div className="modal-body p-2">
               {isError ? (
                 <div className="vds-empty-state py-5">
                   <i
@@ -561,116 +602,103 @@ export function RecordHistoryModal({
                 </div>
               ) : (
                 <>
-                  {(hasPrev || hasMore) && (
-                    <div className="px-3">
-                      <Pagination
-                        onPrev={handlePrev}
-                        onNext={handleNext}
-                        prevEnabled={hasPrev}
-                        nextEnabled={hasMore}
-                        rangeLabel={`${pageIdx * 100 + 1}–${pageIdx * 100 + changes.length}`}
-                      />
-                    </div>
-                  )}
                   <div
-                    className="vds-zones-table-wrap"
+                    className="vds-record-history-table-wrapper"
                     style={{
-                      borderRadius: 0,
-                      boxShadow: "none",
-                      border: "none",
                       overflow: "auto",
                       maxHeight: "55vh",
                     }}
                   >
-                    <table className="vds-zones-table">
-                      <thead>
-                        <tr>
-                          <th style={{ whiteSpace: "nowrap" }}>TIME</th>
-                          <th>RECORDSET NAME</th>
-                          <th style={{ whiteSpace: "nowrap" }}>
-                            RECORDSET TYPE
-                          </th>
-                          <th style={{ whiteSpace: "nowrap" }}>CHANGE TYPE</th>
-                          <th>USER</th>
-                          <th>STATUS</th>
-                          <th style={{ width: 44, textAlign: "center" }}>
-                            INFO
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {changes.map((change: any, idx: number) => {
-                          const cType = String(change.changeType ?? "");
-                          const status = String(change.status ?? "");
-                          return (
-                            <tr key={idx} className="rhm-row">
-                              <td className="vds-table-secondary small vds-date-wrap">
-                                {change.created
-                                  ? formatHistoryTime(String(change.created))
-                                  : "—"}
-                              </td>
-                              <td className="vds-table-primary small fw-medium">
-                                {String(change.recordSet?.name ?? "—")}
-                              </td>
-                              <td>
-                                {change.recordSet?.type ? (
+                    <div className="vds-record-history-table-scroll">
+                      <table className="vds-record-history-table-modal">
+                        <thead>
+                          <tr>
+                            <th style={{ whiteSpace: "nowrap" }}>TIME</th>
+                            <th>RECORDSET NAME</th>
+                            <th style={{ whiteSpace: "nowrap" }}>
+                              RECORDSET TYPE
+                            </th>
+                            <th style={{ whiteSpace: "nowrap" }}>
+                              CHANGE TYPE
+                            </th>
+                            <th>USER</th>
+                            <th>STATUS</th>
+                            <th style={{ width: 44, textAlign: "center" }}>
+                              INFO
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {changes.map((change: any, idx: number) => {
+                            const cType = String(change.changeType ?? "");
+                            const status = String(change.status ?? "");
+                            return (
+                              <tr key={idx} className="rhm-row">
+                                <td className="vds-table-secondary small">
+                                  {change.created
+                                    ? formatHistoryTime(String(change.created))
+                                    : "—"}
+                                </td>
+                                <td className="vds-table-secondary small fw-medium">
+                                  {String(change.recordSet?.name ?? "—")}
+                                </td>
+                                <td>
+                                  {change.recordSet?.type ? (
+                                    <span
+                                      className="vds-table-secondary"
+                                      style={{
+                                        fontSize: "0.68rem",
+                                        padding: "1px 7px",
+                                        fontWeight: "600",
+                                      }}
+                                    >
+                                      {String(change.recordSet.type)}
+                                    </span>
+                                  ) : (
+                                    "—"
+                                  )}
+                                </td>
+                                <td>
                                   <span
-                                    className="vds-type-badge"
-                                    style={{
-                                      fontSize: "0.68rem",
-                                      padding: "1px 7px",
-                                    }}
+                                    className={`vds-status-text ${changeTypeStatusClass(cType)}`}
                                   >
-                                    {String(change.recordSet.type)}
+                                    {cType || "—"}
                                   </span>
-                                ) : (
-                                  "—"
-                                )}
-                              </td>
-                              <td>
-                                <span
-                                  className={`vds-change-type-badge ${changeTypeBadgeClass(cType)}`}
-                                  style={changeTypeStyle(cType)}
-                                >
-                                  {cType || "—"}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="d-flex align-items-center gap-2">
-                                  <UserAvatar
-                                    name={String(change.userName ?? "S")}
-                                  />
+                                </td>
+                                <td>
+                                  <div className="d-flex align-items-center gap-2">
+                                    <span
+                                      className="vds-table-secondary small fw-medium text-truncate"
+                                      style={{ maxWidth: 140 }}
+                                    >
+                                      {String(change.userName ?? "System")}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td>
                                   <span
-                                    className="vds-table-primary small fw-medium text-truncate"
-                                    style={{ maxWidth: 140 }}
+                                    className={`vds-status-text ${statusBadgeClass(status)}`}
+                                    // style={historyStatusStyle(status)}
                                   >
-                                    {String(change.userName ?? "System")}
+                                    {status || "—"}
                                   </span>
-                                </div>
-                              </td>
-                              <td>
-                                <span
-                                  className={`vds-status-badge ${statusBadgeClass(status)}`}
-                                  style={historyStatusStyle(status)}
-                                >
-                                  {status || "—"}
-                                </span>
-                              </td>
-                              <td style={{ width: 44, textAlign: "center" }}>
-                                <button
-                                  type="button"
-                                  className="rhm-info-trigger"
-                                  title="View change details"
-                                  onClick={() => handleInfoClick(change)}
-                                >
-                                  <i className="bi bi-info-circle-fill" />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                </td>
+                                <td style={{ width: 44, textAlign: "center" }}>
+                                  <button
+                                    type="button"
+                                    className="rhm-info-trigger"
+                                    title="View change details"
+                                    onClick={() => handleInfoClick(change)}
+                                  >
+                                    <i className="bi bi-info-circle-fill" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                   {(hasPrev || hasMore) && (
                     <div className="px-3">
@@ -730,7 +758,7 @@ export function RecordHistoryModal({
                   className={`vds-change-type-badge ${changeTypeBadgeClass(String(selectedInfo.changeType ?? ""))}`}
                   style={{
                     fontSize: "0.65rem",
-                    ...changeTypeStyle(String(selectedInfo.changeType ?? "")),
+                    // ...changeTypeStyle(String(selectedInfo.changeType ?? "")),
                   }}
                 >
                   {String(selectedInfo.changeType ?? "—")}
@@ -764,11 +792,11 @@ export function RecordHistoryModal({
                 )}
                 <button
                   type="button"
-                  className="rhm-header-btn"
+                  className="rhm-header-btn rhm-header-btn--info"
                   onClick={handleInfoClose}
                   aria-label="Close"
                   title="Close"
-                  style={{ marginLeft: "auto" }}
+                  style={{ marginLeft: "auto", backgroundColor: "#352f2f" }}
                 >
                   <i className="bi bi-x-lg rhm-close-icon" />
                 </button>

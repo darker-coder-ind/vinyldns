@@ -35,7 +35,7 @@ import { useZoneRecords } from "../hooks/useRecords";
 import { usePaging } from "../hooks/usePaging";
 import { formatDateTime } from "../utils/dateUtils";
 import type { Zone, AclRule } from "../types/zone";
-import type { RecordSet } from "../types/record";
+import type { RecordSet, RecordSetGroupChange } from "../types/record";
 
 type DetailTab = "records" | "recordChanges" | "zoneChanges" | "zone";
 
@@ -2249,13 +2249,13 @@ export function ZoneDetailPage() {
                                       <i className="bi bi-eye" />
                                       View new recordset
                                     </button>
-                                    {c.updates?.recordSet && (
+                                    {c.updates && (
                                       <button
                                         className="btn btn-sm vds-btn-flat px-2 py-0 d-flex align-items-center gap-1 vds-history-btn"
                                         onClick={() =>
                                           setViewingRecordSet({
                                             label: "Old Record Set",
-                                            rs: c.updates!.recordSet!,
+                                            rs: c.updates!,
                                           })
                                         }
                                       >

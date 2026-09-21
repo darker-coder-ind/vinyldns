@@ -333,8 +333,7 @@ export function GroupsPage() {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () =>
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [showForm, createFormDirty, editGroup, editFormDirty]);
 
   const handleRefresh = useCallback(() => {
@@ -553,8 +552,9 @@ export function GroupsPage() {
                 <div
                   className="modal-header"
                   style={{
-                    background: "linear-gradient(90deg, #1e5fa8, #0d1b3e)",
-                    color: "#fff",
+                    background: "var(--vds-bg-elevated)",
+                    color: "var(--vds-text-primary)",
+                    borderBottom: "1px solid var(--vds-border-color)",
                   }}
                 >
                   <h5 className="modal-title d-flex align-items-center gap-2">
@@ -563,7 +563,7 @@ export function GroupsPage() {
                   </h5>
                   <button
                     type="button"
-                    className="btn-close btn-close-white"
+                    className="btn-close"
                     onClick={closeCreateForm}
                   />
                 </div>
@@ -605,8 +605,9 @@ export function GroupsPage() {
                 <div
                   className="modal-header"
                   style={{
-                    background: "linear-gradient(90deg, #3a6db5, #1e3a6e)",
-                    color: "#fff",
+                    background: "var(--vds-bg-elevated)",
+                    color: "var(--vds-text-primary)",
+                    borderBottom: "1px solid var(--vds-border-color)",
                   }}
                 >
                   <h5 className="modal-title d-flex align-items-center gap-2">
@@ -615,7 +616,7 @@ export function GroupsPage() {
                   </h5>
                   <button
                     type="button"
-                    className="btn-close btn-close-white"
+                    className="btn-close"
                     onClick={closeEditForm}
                   />
                 </div>

@@ -811,12 +811,7 @@ export function DnsChangeDetailPage() {
       {isPendingReview && (
         <div
           role="alert"
-          className="d-flex align-items-center gap-2 px-3 py-2 rounded-3 mb-3"
-          style={{
-            background: isDarkTheme() ? "rgba(30,95,168,0.12)" : "#f1f6fb",
-            border: `1px solid ${isDarkTheme() ? "#2d4163" : "#d3e2f2"}`,
-            color: isDarkTheme() ? "#cbd5e1" : "#334155",
-          }}
+          className="vds-pending-review d-flex align-items-center gap-2 px-3 py-2 rounded-3 mb-3"
         >
           <i
             className="bi bi-info-circle-fill flex-shrink-0"
@@ -885,15 +880,8 @@ export function DnsChangeDetailPage() {
         </div>
       )}
 
-      <div
-        className="vds-tab-panel-content rounded-3 mb-3"
-        style={{
-          border: isDarkTheme() ? "1px solid #2d4163" : "1px solid #c7deff",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}
-      >
-        <div className="px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2 vds-section-toolbar">
+      <div>
+        <div className="px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2 vds-section-toolbar rounded-3">
           <div className="d-flex align-items-center gap-2">
             <i
               className="bi bi-list-check text-primary"
@@ -907,7 +895,7 @@ export function DnsChangeDetailPage() {
               {hasActiveSearch ? ` / ${change.changes?.length ?? 0}` : ""}
             </span>
           </div>
-          <div className="d-flex align-items-center gap-2 flex-wrap">
+          <div className="d-flex  align-items-center gap-2 flex-wrap">
             {canReview && isPendingReview && (
               <button
                 type="button"
@@ -923,7 +911,7 @@ export function DnsChangeDetailPage() {
                 <span className="vds-btn-flat__label">Review Actions</span>
               </button>
             )}
-            {canCancelChange && (
+            {true && (
               <button
                 type="button"
                 className="btn btn-sm vds-btn-flat vds-btn-flat--cancel d-flex align-items-center gap-1"
@@ -933,7 +921,6 @@ export function DnsChangeDetailPage() {
                 <span className="vds-btn-flat__label">Cancel Changes</span>
               </button>
             )}
-            <span className="vds-toolbar-sep" />
             <div
               className="input-group input-group-sm vds-search-group"
               style={{ width: 280 }}
@@ -967,7 +954,7 @@ export function DnsChangeDetailPage() {
           <div
             className="d-flex align-items-center justify-content-end px-3 py-2"
             style={{
-              background: isDarkTheme() ? "#0f172a" : "#ffffff",
+              background: isDarkTheme() ? "#000000" : "#ffffff",
               borderBottom: isDarkTheme()
                 ? "1px solid rgba(255,255,255,0.08)"
                 : "1px solid rgba(15,23,42,0.06)",
@@ -989,7 +976,7 @@ export function DnsChangeDetailPage() {
 
         {/* Scrollable Table Container */}
         <div
-          className="vds-zones-table-wrap"
+          className="vds-zones-table-wrap mt-2"
           style={{
             maxHeight: "calc(100vh - 320px)",
             overflowY: "auto",
@@ -1007,7 +994,7 @@ export function DnsChangeDetailPage() {
             <thead>
               <tr
                 style={{
-                  background: isDarkTheme() ? "#162035" : "#f1f5f9",
+                  background: isDarkTheme() ? "#161618" : "#f1f5f9",
                 }}
               >
                 <th style={{ position: "sticky", top: 0, zIndex: 2 }}>
@@ -1089,10 +1076,7 @@ export function DnsChangeDetailPage() {
                       {c.zoneName || "—"}
                     </td>
                     <td>
-                      <span
-                        className="fw-semibold"
-                        style={{ color: "#475569" }}
-                      >
+                      <span className="fw-semibold vds-table-secondary">
                         {c.type}
                       </span>
                     </td>
@@ -1154,57 +1138,15 @@ export function DnsChangeDetailPage() {
       {canReview && isPendingReview && (
         <div
           ref={reviewPanelRef}
-          className="vds-tab-panel-content rounded-3 mb-3"
-          style={{
-            border: isDarkTheme() ? "1px solid #2d4163" : "1px solid #c7deff",
-            borderRadius: "12px",
-            overflow: "hidden",
-          }}
+          className="vds-review-dns-change-container mb-3 mt-2"
         >
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 20px",
-              borderBottom: isDarkTheme()
-                ? "1px solid #2d4163"
-                : "1px solid #c7deff",
-              background: isDarkTheme()
-                ? "linear-gradient(90deg, #162035 0%, #1c2b48 100%)"
-                : "linear-gradient(90deg, #eaf2ff 0%, #f0f6fc 100%)",
-            }}
-          >
-            <i
-              className="bi bi-clipboard2-check"
-              style={{
-                fontSize: "1rem",
-                color: isDarkTheme() ? "#7fa8d8" : "#4a6fa5",
-              }}
-            />
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase" as const,
-                  color: isDarkTheme() ? "#7fa8d8" : "#4a6fa5",
-                }}
-              >
+          <div className="vds-review-dns-change-header">
+            <i className="bi bi-clipboard2-check vds-review-dns-change-header-icon" />
+            <div className="vds-review-dns-change-header-content">
+              <div className="vds-review-dns-change-header-title">
                 Review DNS Change
               </div>
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  color: isDarkTheme() ? "#94a3b8" : "#64748b",
-                  marginTop: 2,
-                  textTransform: "none" as const,
-                  letterSpacing: "normal",
-                  fontWeight: 400,
-                }}
-              >
+              <div className="vds-review-dns-change-header-subtitle">
                 {reviewType
                   ? reviewType === "approve"
                     ? "Ready to approve this change?"
@@ -1213,24 +1155,12 @@ export function DnsChangeDetailPage() {
               </div>
             </div>
           </div>
-
           {/* Body */}
-          <div
-            style={{
-              padding: "20px 24px",
-              background: isDarkTheme() ? "#1a2640" : "#ffffff",
-            }}
-          >
+          <div className="vds-review-dns-change-body">
             <div style={{ marginBottom: 20 }}>
               <label
                 htmlFor="review-comment"
-                style={{
-                  display: "block",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  marginBottom: 8,
-                  color: isDarkTheme() ? "#cbd5e1" : "#334155",
-                }}
+                className="vds-review-dns-change-body-label"
               >
                 <i
                   className="bi bi-chat-left-text me-2"
@@ -1246,35 +1176,7 @@ export function DnsChangeDetailPage() {
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Add comments"
                 rows={3}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  fontSize: "0.85rem",
-                  border: isDarkTheme()
-                    ? "1px solid #2d4163"
-                    : "1px solid #c7deff",
-                  borderRadius: 6,
-                  background: isDarkTheme() ? "#0f172a" : "#f8fbff",
-                  color: isDarkTheme() ? "#e2e8f0" : "#1e293b",
-                  fontFamily: "inherit",
-                  transition: "border-color 0.15s, box-shadow 0.15s",
-                  outline: "none",
-                  resize: "vertical",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = isDarkTheme()
-                    ? "#4a6fa5"
-                    : "#4a6fa5";
-                  e.currentTarget.style.boxShadow = isDarkTheme()
-                    ? "0 0 0 3px rgba(74,111,165,0.2)"
-                    : "0 0 0 3px rgba(74,111,165,0.12)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = isDarkTheme()
-                    ? "#2d4163"
-                    : "#c7deff";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                className="vds-review-dns-change-body-text-area"
               />
             </div>
 
@@ -1329,7 +1231,7 @@ export function DnsChangeDetailPage() {
                       style={{
                         fontSize: "0.85rem",
                         fontWeight: 500,
-                        color: isDarkTheme() ? "#e2e8f0" : "#334155",
+                        color: isDarkTheme() ? "#ffffff" : "#334155",
                       }}
                     >
                       {reviewConfirmationMsg}
@@ -1398,8 +1300,8 @@ export function DnsChangeDetailPage() {
         >
           <div
             style={{
-              background: isDarkTheme() ? "#1e293b" : "#ffffff",
-              border: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
+              background: isDarkTheme() ? "#161618" : "#ffffff",
+              border: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
               borderRadius: "0.85rem",
               boxShadow: "0 25px 60px rgba(0,0,0,0.45)",
               width: "min(420px, 100%)",
@@ -1413,11 +1315,9 @@ export function DnsChangeDetailPage() {
                 alignItems: "center",
                 gap: "0.85rem",
                 padding: "1.1rem 1.4rem",
-                borderTop: `2px solid ${isDarkTheme() ? "#475569" : "#cbd5e1"}`,
-                borderBottom: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
-                background: isDarkTheme()
-                  ? "linear-gradient(90deg,#1e293b,#162032)"
-                  : "linear-gradient(90deg,#ffffff,#f8fafd)",
+                borderTop: `2px solid ${isDarkTheme() ? "#333333" : "#cbd5e1"}`,
+                borderBottom: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
+                background: isDarkTheme() ? "#161618" : "#ffffff",
               }}
             >
               <span
@@ -1443,7 +1343,7 @@ export function DnsChangeDetailPage() {
                     margin: 0,
                     fontSize: "1rem",
                     fontWeight: 700,
-                    color: isDarkTheme() ? "#e2e8f0" : "#0d1b3e",
+                    color: isDarkTheme() ? "#ffffff" : "#0d1b3e",
                   }}
                 >
                   Cancel DNS Change
@@ -1481,7 +1381,7 @@ export function DnsChangeDetailPage() {
               style={{
                 padding: "1.25rem 1.4rem",
                 fontSize: "0.9rem",
-                color: isDarkTheme() ? "#cbd5e1" : "#334155",
+                color: isDarkTheme() ? "#f5f5f5" : "#334155",
                 lineHeight: 1.6,
               }}
             >
@@ -1496,8 +1396,8 @@ export function DnsChangeDetailPage() {
                 justifyContent: "flex-end",
                 gap: "0.6rem",
                 padding: "0.9rem 1.4rem",
-                borderTop: `1px solid ${isDarkTheme() ? "#2d4163" : "#e8ecf0"}`,
-                background: isDarkTheme() ? "#162032" : "#f8fafd",
+                borderTop: `1px solid ${isDarkTheme() ? "#2a2a2c" : "#e8ecf0"}`,
+                background: isDarkTheme() ? "#161618" : "#f8fafd",
               }}
             >
               <button
@@ -1512,7 +1412,7 @@ export function DnsChangeDetailPage() {
                     ? "1px solid #4a6fa5"
                     : "1px solid #93b4e0",
                   background: isDarkTheme() ? "#1e3a5f" : "#e8f0fb",
-                  color: isDarkTheme() ? "#93c5fd" : "#1e40af",
+                  color: isDarkTheme() ? "#ffffff" : "#1e40af",
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.85rem",
@@ -1537,7 +1437,7 @@ export function DnsChangeDetailPage() {
                 onClick={handleCancelChange}
                 style={{
                   padding: "0.5rem 1.25rem",
-                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                  background: "#dc2626",
                   border: "none",
                   color: "#fff",
                   borderRadius: "0.5rem",
