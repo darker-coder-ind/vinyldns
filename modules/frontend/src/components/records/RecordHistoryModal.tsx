@@ -53,125 +53,6 @@ export function statusBadgeClass(status: string): string {
   return "vds-status-text--warning";
 }
 
-/** Detects if dark theme is currently active */
-function isDarkTheme(): boolean {
-  return (
-    document.documentElement.getAttribute("data-vds-theme") === "dark" ||
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-}
-
-function historyStatusStyle(status: string): React.CSSProperties {
-  const isDark = isDarkTheme();
-  if (status === "Complete")
-    return {
-      background: isDark ? "rgba(6,78,59,0.25)" : "#ecfdf5",
-      color: isDark ? "#34d399" : "#065f46",
-      border: isDark ? "1px solid rgba(52,211,153,0.3)" : "1px solid #a7f3d0",
-      boxShadow: isDark
-        ? "0 1px 2px rgba(0,0,0,0.2)"
-        : "0 1px 2px rgba(0,0,0,0.06)",
-      fontWeight: 600,
-    };
-  if (status === "Failed")
-    return {
-      background: isDark ? "rgba(153,27,27,0.25)" : "#fef2f2",
-      color: isDark ? "#f87171" : "#991b1b",
-      border: isDark ? "1px solid rgba(248,113,113,0.3)" : "1px solid #fecaca",
-      boxShadow: isDark
-        ? "0 1px 2px rgba(0,0,0,0.2)"
-        : "0 1px 2px rgba(0,0,0,0.06)",
-      fontWeight: 600,
-    };
-  return {
-    background: isDark ? "rgba(146,64,14,0.25)" : "#fffbeb",
-    color: isDark ? "#fbbf24" : "#92400e",
-    border: isDark ? "1px solid rgba(251,191,36,0.3)" : "1px solid #fde68a",
-    boxShadow: isDark
-      ? "0 1px 2px rgba(0,0,0,0.2)"
-      : "0 1px 2px rgba(0,0,0,0.06)",
-    fontWeight: 600,
-  };
-}
-
-function changeTypeStyle(type: string): React.CSSProperties {
-  const isDark = isDarkTheme();
-  const t = String(type ?? "").toLowerCase();
-
-  // create = Complete (green)
-  if (t === "create")
-    return {
-      background: isDark ? "rgba(6,78,59,0.25)" : "#ecfdf5",
-      color: isDark ? "#34d399" : "#065f46",
-      border: isDark ? "1px solid rgba(52,211,153,0.3)" : "1px solid #a7f3d0",
-      boxShadow: isDark
-        ? "0 1px 2px rgba(0,0,0,0.2)"
-        : "0 1px 2px rgba(0,0,0,0.06)",
-      fontWeight: 600,
-      backgroundColor: "none",
-    };
-  // delete = Failed (red)
-  if (t === "delete")
-    return {
-      background: isDark ? "rgba(153,27,27,0.25)" : "#fef2f2",
-      color: isDark ? "#f87171" : "#991b1b",
-      border: isDark ? "1px solid rgba(248,113,113,0.3)" : "1px solid #fecaca",
-      boxShadow: isDark
-        ? "0 1px 2px rgba(0,0,0,0.2)"
-        : "0 1px 2px rgba(0,0,0,0.06)",
-      fontWeight: 600,
-    };
-  // update = Warning (yellow/amber)
-  if (t === "update")
-    return {
-      background: isDark ? "rgba(146,64,14,0.25)" : "#fffbeb",
-      color: isDark ? "#fbbf24" : "#92400e",
-      border: isDark ? "1px solid rgba(251,191,36,0.3)" : "1px solid #fde68a",
-      boxShadow: isDark
-        ? "0 1px 2px rgba(0,0,0,0.2)"
-        : "0 1px 2px rgba(0,0,0,0.06)",
-      fontWeight: 600,
-    };
-  // default = info (blue)
-  return {
-    background: isDark ? "rgba(37,99,235,0.25)" : "#dbeafe",
-    color: isDark ? "#60a5fa" : "#1e40af",
-    border: isDark ? "1px solid rgba(96,165,250,0.3)" : "1px solid #bfdbfe",
-    boxShadow: isDark
-      ? "0 1px 2px rgba(0,0,0,0.2)"
-      : "0 1px 2px rgba(0,0,0,0.06)",
-    fontWeight: 600,
-  };
-}
-
-/**
- * Small presentational component that generates an avatar from the first two
- * initials of a username. Splits on common username delimiters (dots, dashes,
- * underscores, @ for email-style usernames) so that "john.doe" becomes "JD".
- */
-function UserAvatar({ name }: { name: string }) {
-  const initials =
-    name
-      .split(/[._\-@]+/)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() ?? "")
-      .join("") || name.slice(0, 2).toUpperCase();
-  return (
-    <span
-      className="vds-zone-avatar"
-      style={{
-        width: 26,
-        height: 26,
-        fontSize: "0.58rem",
-        borderRadius: 6,
-        flexShrink: 0,
-      }}
-    >
-      {initials}
-    </span>
-  );
-}
-
 /** Formats a timestamp as two lines: 'Jun 25, 2021' and '5:10 AM'. */
 export function formatHistoryTime(ts: string): string {
   const date = new Date(ts);
@@ -722,7 +603,7 @@ export function RecordHistoryModal({
         <div
           className="modal d-block"
           style={{
-            backgroundColor: "rgba(13,27,62,0.45)",
+            backgroundColor: "rgba(66, 67, 70, 0.45)",
             zIndex: 1060,
             backdropFilter: "blur(2px)",
           }}

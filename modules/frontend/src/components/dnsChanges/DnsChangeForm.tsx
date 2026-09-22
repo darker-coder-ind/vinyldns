@@ -1087,7 +1087,7 @@ function DuplicateReviewModal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(15, 23, 42, 0.65)",
+        background: "rgba(21, 22, 24, 0.9)",
         backdropFilter: "blur(2px)",
         zIndex: 1080,
         display: "flex",

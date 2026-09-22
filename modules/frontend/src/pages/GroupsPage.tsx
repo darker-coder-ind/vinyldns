@@ -547,7 +547,7 @@ export function GroupsPage() {
               if (e.target === e.currentTarget) closeCreateForm();
             }}
           >
-            <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-dialog modal-dialog-centered " role="document">
               <div className="modal-content" ref={createFormRef}>
                 <div
                   className="modal-header"
