@@ -20,6 +20,7 @@ import { recordsService } from "../../services/recordsService";
 import { copyToClipboard } from "../../utils/dateUtils";
 import { Pagination } from "../common/Pagination";
 import { LoadingSpinner } from "../common/LoadingSpinner";
+import { log } from "console";
 
 interface RecordHistoryModalProps {
   record: any;
@@ -148,15 +149,9 @@ export function RecordHistoryModal({
 
   // 30 s staleTime avoids hitting the API on every modal open when the user
   // closes and reopens history for the same record within the same session.
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["recordHistory", record.id, record.zoneId, cursor],
     queryFn: async () => {
-      console.debug("[RecordHistoryModal] fetching history with", {
-        zoneId: record.zoneId,
-        fqdn,
-        type: record.type,
-        cursor,
-      });
       const res = await recordsService.listRecordSetChangeHistory(
         String(record.zoneId ?? ""),
         100,
@@ -247,7 +242,7 @@ export function RecordHistoryModal({
       >
         <div
           className="modal-dialog modal-dialog-scrollable modal-dialog-centered rhm-dialog"
-          style={{ maxWidth: "95vw", width: "95vw", margin: "0 auto" }}
+          style={{ maxWidth: "75vw", width: "95vw", margin: "0 auto" }}
         >
           <div
             className="modal-content border-0 rhm-content"
@@ -322,7 +317,7 @@ export function RecordHistoryModal({
                     aria-label="Refresh"
                     title="Refresh history"
                     onClick={() => void refetch()}
-                    disabled={isLoading}
+                    disabled={isFetching}
                     className="rhm-header-btn"
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.background = "rgba(0, 0, 0, 0.5)")
@@ -332,7 +327,7 @@ export function RecordHistoryModal({
                     }
                   >
                     <i
-                      className={`bi bi-arrow-clockwise${isLoading ? " rhm-refresh-icon-loading" : ""}`}
+                      className={`rhm-refresh-icon bi bi-arrow-clockwise ${isFetching ? "is-spinning" : ""}`}
                       style={{ fontSize: "0.95rem" }}
                     />
                   </button>
@@ -349,7 +344,10 @@ export function RecordHistoryModal({
                       (e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)")
                     }
                   >
-                    <i className="bi bi-x-lg" style={{ fontSize: "0.85rem" }} />
+                    <i
+                      className="rhm-close-icon bi bi-x-lg"
+                      style={{ fontSize: "0.85rem" }}
+                    />
                   </button>
                 </div>
               </div>
@@ -468,7 +466,7 @@ export function RecordHistoryModal({
                     {String(record.type ?? "(none)")}
                   </small>
                 </div>
-              ) : isLoading ? (
+              ) : isFetching ? (
                 <LoadingSpinner />
               ) : changes.length === 0 ? (
                 <div className="vds-empty-state py-5">

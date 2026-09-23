@@ -6305,14 +6305,14 @@ h1.h3 {
     transform: none;
   }
 }
-@keyframes rhm-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 @keyframes rhm-close-spin {
   to {
     transform: rotate(-90deg) scale(1.15);
+  }
+}
+@keyframes rhm-refresh-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 @keyframes rhm-shimmer {
@@ -6476,15 +6476,15 @@ h1.h3 {
   display: inline-block;
   transition: transform 0.3s linear;
 }
-.rhm-refresh-icon-loading {
-  animation: rhm-spin 0.7s linear infinite;
-}
 .rhm-close-icon {
   display: inline-block;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .rhm-header-btn:hover:not(:disabled) .rhm-close-icon {
   animation: rhm-close-spin 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.is-spinning {
+  animation: rhm-refresh-spin 0.8s linear infinite; 
 }
 
 .rhm-header {
@@ -8427,4 +8427,294 @@ h1.h3 {
 }
 [data-vds-theme="dark"] .vds-cancel-modal-btn-tinted:hover {
   background: #1e4d80;
+}
+/* =========================================
+   Time Filter Dropdown Styles
+========================================= */
+
+/* Dropdown Panel Container */
+.vds-time-filter-panel {
+  position: fixed;
+  z-index: 1200;
+  width: 320px;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 12px 40px rgba(20, 40, 90, 0.2), 0 2px 8px rgba(0, 0, 0, 0.07);
+  border: 1px solid #d4dbe8;
+}
+[data-vds-theme="dark"] .vds-time-filter-panel {
+  background: #161618;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #2a2a2c;
+}
+
+/* Header */
+.vds-time-filter-header {
+  padding: 10px 14px 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #eef2ff;
+}
+[data-vds-theme="dark"] .vds-time-filter-header {
+  background: #000000;
+}
+
+.vds-time-filter-header-icon {
+  color: #2e5090;
+  font-size: 0.75rem;
+}
+[data-vds-theme="dark"] .vds-time-filter-header-icon {
+  color: #ffffff;
+}
+
+.vds-time-filter-header-title {
+  color: #2e5090;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+[data-vds-theme="dark"] .vds-time-filter-header-title {
+  color: #ffffff;
+}
+
+/* Grid Area */
+.vds-time-filter-grid {
+  padding: 8px 10px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vds-time-filter-row {
+  display: flex;
+  gap: 4px;
+}
+
+/* Option Button */
+.vds-time-filter-opt {
+  flex: 1 1 0;
+  border-radius: 0.5rem;
+  padding: 5px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  outline: none;
+  background: rgba(246, 248, 252, 0.95);
+  border: 1px solid rgba(46, 80, 144, 0.1);
+  box-shadow: none;
+}
+.vds-time-filter-opt:hover {
+  background: rgba(46, 80, 144, 0.07);
+}
+[data-vds-theme="dark"] .vds-time-filter-opt {
+  background: #161618;
+  border-color: #2a2a2c;
+}
+[data-vds-theme="dark"] .vds-time-filter-opt:hover {
+  background: #222224;
+}
+
+/* Option Button - Active State */
+.vds-time-filter-opt--active {
+  background: rgba(46, 80, 144, 0.12);
+  border: 1px solid rgba(46, 80, 144, 0.45);
+  box-shadow: 0 1px 6px rgba(46, 80, 144, 0.15);
+}
+.vds-time-filter-opt--active:hover {
+  background: rgba(46, 80, 144, 0.12);
+}
+[data-vds-theme="dark"] .vds-time-filter-opt--active {
+  background: #2a2a2c;
+  border-color: #4a4a4c;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+[data-vds-theme="dark"] .vds-time-filter-opt--active:hover {
+  background: #2a2a2c;
+}
+
+/* Option Icon Wrap */
+.vds-time-filter-icon-wrap {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(46, 80, 144, 0.1);
+}
+.vds-time-filter-opt--active .vds-time-filter-icon-wrap {
+  background: #2e5090;
+}
+[data-vds-theme="dark"] .vds-time-filter-icon-wrap {
+  background: #242424;
+}
+[data-vds-theme="dark"] .vds-time-filter-opt--active .vds-time-filter-icon-wrap {
+  background: #f5f5f5;
+}
+
+/* Option Icon */
+.vds-time-filter-icon {
+  font-size: 0.62rem;
+  color: #506080;
+}
+.vds-time-filter-opt--active .vds-time-filter-icon {
+  color: #ffffff;
+}
+[data-vds-theme="dark"] .vds-time-filter-icon {
+  color: #ababb1;
+}
+[data-vds-theme="dark"] .vds-time-filter-opt--active .vds-time-filter-icon {
+  color: #000000;
+}
+
+/* Option Label */
+.vds-time-filter-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #344563;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.vds-time-filter-opt--active .vds-time-filter-label {
+  font-weight: 700;
+  color: #1a2a4c;
+}
+[data-vds-theme="dark"] .vds-time-filter-label {
+  color: #e0e0e0;
+}
+[data-vds-theme="dark"] .vds-time-filter-opt--active .vds-time-filter-label {
+  color: #ffffff;
+}
+
+/* Option Checkmark */
+.vds-time-filter-check {
+  margin-left: auto;
+  font-size: 0.58rem;
+  flex-shrink: 0;
+  color: #2e5090;
+}
+[data-vds-theme="dark"] .vds-time-filter-check {
+  color: #ffffff;
+}
+
+/* Custom Range Container */
+.vds-time-filter-custom-wrap {
+  margin: 6px 12px 8px;
+  padding: 11px 13px;
+  border-radius: 0.6rem;
+  background: rgba(46, 80, 144, 0.05);
+  border: 1px solid rgba(46, 80, 144, 0.18);
+}
+[data-vds-theme="dark"] .vds-time-filter-custom-wrap {
+  background: #000000;
+  border-color: #2a2a2c;
+}
+
+/* Custom Range Labels */
+.vds-time-filter-custom-title {
+  font-size: 0.67rem;
+  color: #506080;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+[data-vds-theme="dark"] .vds-time-filter-custom-title {
+  color: #a1a1aa;
+}
+
+.vds-time-filter-custom-title-icon {
+  color: #2e5090;
+}
+[data-vds-theme="dark"] .vds-time-filter-custom-title-icon {
+  color: #9da0a7;
+}
+
+.vds-time-filter-input-label {
+  font-size: 0.67rem;
+  color: #8090a8;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+[data-vds-theme="dark"] .vds-time-filter-input-label {
+  color: #a1a1aa;
+}
+
+/* Custom Range Inputs */
+.vds-time-filter-input {
+  font-size: 0.76rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(46, 80, 144, 0.3);
+}
+[data-vds-theme="dark"] .vds-time-filter-input {
+  background: #161618;
+  border-color: #333333;
+  color: #f5f5f5;
+}
+
+.vds-time-filter-divider {
+  color: #9baec8;
+  font-size: 1rem;
+  padding-bottom: 4px;
+}
+[data-vds-theme="dark"] .vds-time-filter-divider {
+  color: #6e6e6e;
+}
+
+/* Buttons inside the dropdown */
+.vds-time-filter-btn-apply {
+  margin-top: 10px;
+  width: 100%;
+  background: #2e5090;
+  color: #fff;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 5px 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+[data-vds-theme="dark"] .vds-time-filter-btn-apply {
+  background: #e5e5e5;
+  color: #000000;
+}
+
+.vds-time-filter-footer {
+  padding: 6px 12px 10px;
+  border-top: 1px solid #eef0f5;
+}
+[data-vds-theme="dark"] .vds-time-filter-footer {
+  border-top-color: #2a2a2c;
+}
+
+.vds-time-filter-btn-clear {
+  width: 100%;
+  background: rgba(229, 62, 62, 0.06);
+  border: 1px solid rgba(229, 62, 62, 0.18);
+  border-radius: 0.4rem;
+  color: #e53e3e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+[data-vds-theme="dark"] .vds-time-filter-input::-webkit-calendar-picker-indicator {
+  background-color: transparent !important;
+  filter: invert(1) brightness(2) !important;
+  cursor: pointer;
 }

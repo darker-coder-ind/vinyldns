@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 
 export type TimeRange = "all" | "1d" | "7d" | "30d" | "90d" | "custom";
@@ -133,15 +132,12 @@ export function TimeFilterDropdown({
   }, [open]);
 
   const isActive = value !== "all";
-  const isDark =
-    document.documentElement.getAttribute("data-vds-theme") === "dark";
-
+  
   const btnLabel =
     value === "custom" && (dateFrom || dateTo)
       ? `${dateFrom || "…"} – ${dateTo || "…"}`
       : LABELS[value];
 
-  // ── Renders one option card cell ──────────────────────────────────────────
   const renderCell = (opt: {
     range: TimeRange;
     icon: string;
@@ -157,101 +153,16 @@ export function TimeFilterDropdown({
           onChange(opt.range);
           if (opt.range !== "custom") setOpen(false);
         }}
-        style={{
-          flex: "1 1 0",
-          border: selected
-            ? isDark
-              ? "1.5px solid rgba(59,130,246,0.5)"
-              : "1.5px solid rgba(46,80,144,0.45)"
-            : isDark
-              ? "1px solid #2a2a2c"
-              : "1px solid rgba(46,80,144,0.1)",
-          borderRadius: "0.5rem",
-          background: selected
-            ? isDark
-              ? "rgba(59,130,246,0.16)"
-              : "rgba(46,80,144,0.12)"
-            : isDark
-              ? "#161618"
-              : "rgba(246,248,252,0.95)",
-          padding: "5px 4px 4px",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 6,
-          cursor: "pointer",
-          transition: "all 0.14s",
-          boxShadow: selected
-            ? isDark
-              ? "0 1px 6px rgba(59,130,246,0.2)"
-              : "0 1px 6px rgba(46,80,144,0.15)"
-            : "none",
-          outline: "none",
-          position: "relative",
-        }}
-        onMouseEnter={(e) => {
-          if (!selected)
-            (e.currentTarget as HTMLButtonElement).style.background = isDark
-              ? "#1a1a1c"
-              : "rgba(46,80,144,0.07)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = selected
-            ? isDark
-              ? "rgba(59,130,246,0.16)"
-              : "rgba(46,80,144,0.12)"
-            : isDark
-              ? "#161618"
-              : "rgba(246,248,252,0.95)";
-        }}
+        className={`vds-time-filter-opt ${selected ? "vds-time-filter-opt--active" : ""}`}
       >
-        <div
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: selected
-              ? isDark
-                ? "#3b82f6"
-                : "#2e5090"
-              : isDark
-                ? "#242424"
-                : "rgba(46,80,144,0.1)",
-            flexShrink: 0,
-          }}
-        >
-          <i
-            className={`bi ${opt.icon} custom-icon`}
-            style={{
-              fontSize: "0.62rem",
-              color: selected ? "#ffffff" : isDark ? "#ababb1" : "#506080",
-            }}
-          />
+        <div className="vds-time-filter-icon-wrap">
+          <i className={`bi ${opt.icon} vds-time-filter-icon custom-icon`} />
         </div>
-        <span
-          style={{
-            fontSize: "0.7rem",
-            fontWeight: selected ? 700 : 500,
-            color: selected ? "#ffffff" : isDark ? "#e0e0e0" : "#344563",
-            lineHeight: 1.2,
-            whiteSpace: "nowrap",
-          }}
-        >
+        <span className="vds-time-filter-label">
           {opt.label}
         </span>
         {selected && (
-          <i
-            className="bi bi-check-circle-fill"
-            style={{
-              marginLeft: "auto",
-              fontSize: "0.58rem",
-              color: isDark ? "#3b82f6" : "#2e5090",
-              flexShrink: 0,
-            }}
-          />
+          <i className="bi bi-check-circle-fill vds-time-filter-check" />
         )}
       </button>
     );
@@ -280,13 +191,7 @@ export function TimeFilterDropdown({
           setOpen((o) => !o);
         }}
       >
-        <i
-          className="bi bi-calendar3"
-          style={{
-            fontSize: "0.78rem",
-            // color: isDark ?"#1e5fa8" : "#fff",
-          }}
-        />
+        <i className="bi bi-calendar3" style={{ fontSize: "0.78rem" }} />
         <span style={{ whiteSpace: "nowrap" }}>{btnLabel}</span>
         {isActive && (
           <span
@@ -307,61 +212,22 @@ export function TimeFilterDropdown({
         ReactDOM.createPortal(
           <div
             data-time-filter-panel
+            className="vds-time-filter-panel"
             style={{
-              position: "fixed",
               top: panelPos.top,
               right: panelPos.right,
-              zIndex: 1200,
-              width: 320,
-              background: isDark ? "#161618" : "#fff",
-              borderRadius: "0.9rem",
-              boxShadow: isDark
-                ? "0 12px 40px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3)"
-                : "0 12px 40px rgba(20,40,90,0.2), 0 2px 8px rgba(0,0,0,0.07)",
-              border: isDark ? "1px solid #2a2a2c" : "1px solid #d4dbe8",
-              overflow: "hidden",
             }}
           >
             {/* Header */}
-            <div
-              style={{
-                background: isDark ? "#1a1a1a" : "#eef2ff",
-                padding: "10px 14px 9px",
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              <i
-                className="bi bi-calendar3"
-                style={{
-                  color: isDark ? "#ffffff" : "#2e5090",
-                  fontSize: "0.75rem",
-                }}
-              />
-              <span
-                style={{
-                  color: isDark ? "#ffffff" : "#2e5090",
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                }}
-              >
-                TIME FILTER
-              </span>
+            <div className="vds-time-filter-header">
+              <i className="bi bi-calendar3 vds-time-filter-header-icon" />
+              <span className="vds-time-filter-header-title">TIME FILTER</span>
             </div>
 
             {/* 2-column grid of option cards */}
-            <div
-              style={{
-                padding: "8px 10px 4px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-              }}
-            >
+            <div className="vds-time-filter-grid">
               {GRID.map((row, ri) => (
-                <div key={ri} style={{ display: "flex", gap: 4 }}>
+                <div key={ri} className="vds-time-filter-row">
                   {row.map(renderCell)}
                 </div>
               ))}
@@ -369,94 +235,28 @@ export function TimeFilterDropdown({
 
             {/* Custom date range – expands below grid when Custom is selected */}
             {value === "custom" && (
-              <div
-                style={{
-                  margin: "6px 12px 8px",
-                  padding: "11px 13px",
-                  background: isDark ? "#1a1a1a" : "rgba(46,80,144,0.05)",
-                  borderRadius: "0.6rem",
-                  border: isDark
-                    ? "1px solid #2a2a2c"
-                    : "1px solid rgba(46,80,144,0.18)",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "0.67rem",
-                    color: isDark ? "#a1a1aa" : "#506080",
-                    fontWeight: 700,
-                    marginBottom: 8,
-                    letterSpacing: "0.04em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                  }}
-                >
-                  <i
-                    className="bi bi-calendar-range"
-                    style={{ color: isDark ? "#9da0a7" : "#2e5090" }}
-                  />
+              <div className="vds-time-filter-custom-wrap">
+                <div className="vds-time-filter-custom-title">
+                  <i className="bi bi-calendar-range vds-time-filter-custom-title-icon" />
                   DATE RANGE
                 </div>
-                <div
-                  style={{ display: "flex", alignItems: "flex-end", gap: 8 }}
-                >
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: "0.67rem",
-                        color: isDark ? "#a1a1aa" : "#8090a8",
-                        marginBottom: 4,
-                        fontWeight: 500,
-                      }}
-                    >
-                      From
-                    </div>
+                    <div className="vds-time-filter-input-label">From</div>
                     <input
                       type="date"
-                      className="form-control form-control-sm"
-                      style={{
-                        fontSize: "0.76rem",
-                        borderRadius: "0.4rem",
-                        borderColor: isDark ? "#2a2a2c" : "rgba(46,80,144,0.3)",
-                        background: isDark ? "#111111" : undefined,
-                        color: isDark ? "#f5f5f5" : undefined,
-                      }}
+                      className="form-control form-control-sm vds-time-filter-input"
                       value={dateFrom}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => onDateFromChange(e.target.value)}
                     />
                   </div>
-                  <div
-                    style={{
-                      color: isDark ? "#6e6e6e" : "#9baec8",
-                      fontSize: "1rem",
-                      paddingBottom: 4,
-                    }}
-                  >
-                    –
-                  </div>
+                  <div className="vds-time-filter-divider">–</div>
                   <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: "0.67rem",
-                        color: isDark ? "#a1a1aa" : "#8090a8",
-                        marginBottom: 4,
-                        fontWeight: 500,
-                      }}
-                    >
-                      To
-                    </div>
+                    <div className="vds-time-filter-input-label">To</div>
                     <input
                       type="date"
-                      className="form-control form-control-sm"
-                      style={{
-                        fontSize: "0.76rem",
-                        borderRadius: "0.4rem",
-                        borderColor: isDark ? "#2a2a2c" : "rgba(46,80,144,0.3)",
-                        background: isDark ? "#111111" : undefined,
-                        color: isDark ? "#f5f5f5" : undefined,
-                      }}
+                      className="form-control form-control-sm vds-time-filter-input"
                       value={dateTo}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => onDateToChange(e.target.value)}
@@ -466,22 +266,7 @@ export function TimeFilterDropdown({
                 {(dateFrom || dateTo) && (
                   <button
                     type="button"
-                    style={{
-                      marginTop: 10,
-                      width: "100%",
-                      background: isDark ? "#3b82f6" : "#2e5090",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "0.4rem",
-                      padding: "5px 0",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 5,
-                    }}
+                    className="vds-time-filter-btn-apply"
                     onClick={() => setOpen(false)}
                   >
                     <i className="bi bi-check-lg" />
@@ -493,29 +278,10 @@ export function TimeFilterDropdown({
 
             {/* Clear footer */}
             {isActive && (
-              <div
-                style={{
-                  padding: "6px 12px 10px",
-                  borderTop: isDark ? "1px solid #2a2a2c" : "1px solid #eef0f5",
-                }}
-              >
+              <div className="vds-time-filter-footer">
                 <button
                   type="button"
-                  style={{
-                    width: "100%",
-                    background: "rgba(229,62,62,0.06)",
-                    border: "1px solid rgba(229,62,62,0.18)",
-                    borderRadius: "0.4rem",
-                    color: "#e53e3e",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    padding: "5px 0",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 5,
-                  }}
+                  className="vds-time-filter-btn-clear"
                   onClick={() => {
                     onChange("all");
                     onDateFromChange("");
