@@ -745,6 +745,54 @@ class MySqlBatchChangeRepositoryIntegrationSpec
       f.unsafeRunSync().batchChanges shouldBe empty
     }
 
+    "get batch change summaries with a start-only date bound" in {
+      val old = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.parse("2000-06-01T00:00:00Z"))
+      val recent = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.now.truncatedTo(ChronoUnit.MILLIS))
+
+      val f =
+        for {
+          _ <- repo.save(old)
+          _ <- repo.save(recent)
+          result <- repo.getBatchChangeSummaries(
+            None,
+            dateTimeStartRange = Some("2020-01-01 00:00:00")
+          )
+        } yield result
+
+      // The repository emits each date bound as a separate predicate. A start-only filter therefore
+      // behaves as an inclusive lower-bound constraint and excludes records created before the
+      // supplied timestamp. This is the current contract that the test captures explicitly.
+      f.unsafeRunSync().batchChanges.map(_.id) should contain only recent.id
+    }
+
+    "get batch change summaries with an end-only date bound" in {
+      val old = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.parse("2000-06-01T00:00:00Z"))
+      val recent = randomBatchChangeWithList(
+        randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+      ).copy(createdTimestamp = Instant.now.truncatedTo(ChronoUnit.MILLIS))
+
+      val f =
+        for {
+          _ <- repo.save(old)
+          _ <- repo.save(recent)
+          result <- repo.getBatchChangeSummaries(
+            None,
+            dateTimeEndRange = Some("2010-12-31 23:59:59")
+          )
+        } yield result
+
+      // When only an end bound is supplied, the query behaves as an inclusive upper-bound filter and
+      // returns only records created on or before the provided timestamp. This intentionally
+      // documents the current semantics for partial date range filters.
+      f.unsafeRunSync().batchChanges.map(_.id) should contain only old.id
+    }
+
     "get batch change summaries by user ID" in {
       val f =
         for {
