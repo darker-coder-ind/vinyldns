@@ -20,7 +20,7 @@ import {
   statusBadgeClass,
   formatHistoryTime,
   formatRecordValues,
-} from "../../../components/records/RecordHistoryModal";
+} from "../../../components/records/RecordHistoryModalBkp";
 
 describe("changeTypeBadgeClass", () => {
   it.each([

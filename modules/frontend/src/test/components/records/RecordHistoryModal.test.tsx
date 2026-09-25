@@ -28,7 +28,7 @@ vi.mock("../../../services/recordsService", () => ({
 }));
 
 import { recordsService } from "../../../services/recordsService";
-import { RecordHistoryModal } from "../../../components/records/RecordHistoryModal";
+import { RecordHistoryModal } from "../../../components/records/RecordHistoryModalBkp";
 import { renderWithProviders } from "../../utils/renderWithProviders";
 
 function record(overrides: Record<string, unknown> = {}) {

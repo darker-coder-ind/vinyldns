@@ -25,6 +25,7 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { dnsChangeService } from "../services/dnsChangeService";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { CancelDnsChangeModal } from "../components/modals/CancelDnsChangeModal";
 import { formatDateTime } from "../utils/dateUtils";
 import { copyToClipboard } from "../utils/dateUtils";
 import { useDnsChanges } from "../hooks/useDnsChanges";
@@ -891,7 +892,7 @@ export function DnsChangeDetailPage() {
                 <span className="vds-btn-flat__label">Review Actions</span>
               </button>
             )}
-            { canCancelChange && (
+            {canCancelChange && (
               <button
                 type="button"
                 className="btn btn-sm vds-btn-flat vds-btn-flat--cancel d-flex align-items-center gap-1"
@@ -1233,67 +1234,15 @@ export function DnsChangeDetailPage() {
         </div>
       )}
 
-      {/* Extracted Cancel Modal */}
       {showCancelModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cancel-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowCancelModal(false);
-          }}
-          className="vds-cancel-modal-overlay"
-        >
-          <div className="vds-cancel-modal-container vds-cancel-modal-container--sm">
-            {/* Header */}
-            <div className="vds-cancel-modal-header">
-              <span className="vds-cancel-modal-icon-wrap">
-                <i className="bi bi-exclamation-triangle-fill" />
-              </span>
-              <div style={{ flex: 1 }}>
-                <h6 id="cancel-modal-title" className="vds-cancel-modal-title">
-                  Cancel DNS Change
-                </h6>
-                <div className="vds-cancel-modal-subtitle">
-                  This action cannot be undone
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCancelModal(false)}
-                aria-label="Close"
-                className="vds-cancel-modal-close-btn"
-              >
-                <i className="bi bi-x-lg" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="vds-cancel-modal-body">
-              Are you sure you want to cancel this DNS Change? All pending
-              records in this batch will be cancelled.
-            </div>
-
-            {/* Footer */}
-            <div className="vds-cancel-modal-footer">
-              <button
-                type="button"
-                onClick={() => setShowCancelModal(false)}
-                className="vds-cancel-modal-btn-tinted"
-              >
-                Keep DNS Change
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelChange}
-                className="vds-cancel-modal-btn-danger"
-              >
-                <i className="bi bi-x-circle-fill" />
-                Cancel DNS Change
-              </button>
-            </div>
-          </div>
-        </div>
+        <CancelDnsChangeModal
+          isOpen={showCancelModal}
+          changeId={change.id}
+          submittedAt={change.createdTimestamp}
+          comments={change.comments}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancelChange}
+        />
       )}
     </div>
   );

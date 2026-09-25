@@ -110,23 +110,14 @@ export function RecordHistoryModal({
   record,
   onClose,
 }: RecordHistoryModalProps) {
-  // pageStack holds the sequence of startFrom cursors navigated so far.
-  // pageStack[0] is always `undefined` (first page, no cursor).
   const [pageStack, setPageStack] = useState<(string | undefined)[]>([
     undefined,
   ]);
   const [pageIdx, setPageIdx] = useState(0);
-  // `copied` tracks which ID was just copied so the button can briefly show a
-  // checkmark before reverting — without needing a separate boolean per field.
   const [copied, setCopied] = useState<"record" | "zone" | null>(null);
-
-  // INFO detail modal state (click-to-open)
   const [selectedInfo, setSelectedInfo] = useState<any | null>(null);
-  // tracks which "View recordset" sections are expanded inside the detail modal
   const [expandedViews, setExpandedViews] = useState<Set<string>>(new Set());
-  // tracks which copy button in the info modal just fired (shows animated checkmark)
   const [copiedPop, setCopiedPop] = useState<string | null>(null);
-  // force re-render when theme changes
   const [, setThemeRefresh] = useState(false);
 
   const copyPop = useCallback((key: string, val: string) => {
@@ -147,8 +138,6 @@ export function RecordHistoryModal({
   const fqdn = String(record.fqdn ?? record.name ?? "");
   const cursor = pageStack[pageIdx];
 
-  // 30 s staleTime avoids hitting the API on every modal open when the user
-  // closes and reopens history for the same record within the same session.
   const { data, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["recordHistory", record.id, record.zoneId, cursor],
     queryFn: async () => {
@@ -169,8 +158,6 @@ export function RecordHistoryModal({
   const hasMore: boolean = (data as any)?.nextId != null;
   const hasPrev = pageIdx > 0;
 
-  // Close on Escape so the modal is keyboard accessible without needing a
-  // visible close button to be in focus.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -179,8 +166,6 @@ export function RecordHistoryModal({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Lock body scroll while the modal is open to prevent the background page
-  // from scrolling independently of the modal content.
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -188,7 +173,6 @@ export function RecordHistoryModal({
     };
   }, []);
 
-  // Listen for theme changes and re-render to apply dark mode status badge colors
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setThemeRefresh((prev) => !prev);
@@ -200,9 +184,6 @@ export function RecordHistoryModal({
     return () => observer.disconnect();
   }, []);
 
-  // Advance to the next page by pushing the next cursor onto the stack.
-  // The API returns `nextId` as an integer; convert to string for the URL
-  // query param since `startFrom` is passed as a string in the service layer.
   const handleNext = () => {
     const rawNextId = (data as any)?.nextId;
     const nextId: string | undefined =
@@ -217,8 +198,6 @@ export function RecordHistoryModal({
     if (pageIdx > 0) setPageIdx(pageIdx - 1);
   };
 
-  // Briefly shows a checkmark on the copy button after a successful write to
-  // give the user clear visual confirmation without a toast notification.
   const handleCopy = async (type: "record" | "zone") => {
     const val = type === "record" ? record.id : record.zoneId;
     if (!val) return;
@@ -230,12 +209,7 @@ export function RecordHistoryModal({
   return (
     <>
       <div
-        className="modal d-block rhm-backdrop"
-        style={{
-          backgroundColor: "rgba(13,27,62,0.55)",
-          zIndex: 1050,
-          backdropFilter: "blur(2px)",
-        }}
+        className="modal d-block rhm-backdrop vds-dark-modal-backdrop"
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -244,65 +218,20 @@ export function RecordHistoryModal({
           className="modal-dialog modal-dialog-scrollable modal-dialog-centered rhm-dialog"
           style={{ maxWidth: "75vw", width: "95vw", margin: "0 auto" }}
         >
-          <div
-            className="modal-content border-0 rhm-content"
-            style={{
-              borderRadius: 14,
-              overflow: "hidden",
-              boxShadow:
-                "0 24px 64px rgba(13,27,62,0.22), 0 4px 16px rgba(0,0,0,0.1)",
-              border: "1px solid #dde4ef",
-            }}
-          >
-            {/* ── Header — matches vds-page-header gradient ── */}
-            <div
-              className="rhm-header"
-              style={{
-                background: "#0d0d11",
-                borderBottom: "1px solid #222227",
-                padding: "10px 12px 8px",
-              }}
-            >
-              {/* Main Header Row */}
+          <div className="modal-content border-0 rhm-content vds-dark-modal-content">
+            <div className="rhm-header vds-dark-modal-header">
               <div className="d-flex align-items-center justify-content-between gap-3 min-h-100">
                 <div className="d-flex align-items-center gap-3 min-w-0">
-                  {/* Title & FQDN Metadata */}
                   <div className="min-w-0">
-                    <h5
-                      className="m-0 fw-semibold text-white"
-                      style={{
-                        fontSize: "1.5rem",
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
+                    <h5 className="m-0 fw-semibold text-white vds-dark-modal-title">
                       Record Change History
                     </h5>
                     <div className="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                      <span
-                        className="small font-monospace px-2"
-                        style={{
-                          fontSize: "0.82rem",
-                          background: "rgba(12, 31, 57, 0.2)",
-                          color: "#93c5fd",
-                          borderRadius: 4,
-                          border: "1px solid rgba(58, 109, 181, 0.4)",
-                        }}
-                      >
+                      <span className="small font-monospace px-2 vds-dark-modal-badge badge-fqdn">
                         {fqdn}
                       </span>
                       {record.type && (
-                        <span
-                          style={{
-                            fontSize: "0.68rem",
-                            fontWeight: 600,
-                            padding: "2px 8px",
-                            borderRadius: 4,
-                            background: "rgba(12, 31, 57, 0.2)",
-                            color: "#93c5fd",
-                            border: "1px solid rgba(58, 109, 181, 0.4)",
-                            letterSpacing: "0.04em",
-                          }}
-                        >
+                        <span className="vds-dark-modal-badge badge-type">
                           {String(record.type)}
                         </span>
                       )}
@@ -310,7 +239,6 @@ export function RecordHistoryModal({
                   </div>
                 </div>
 
-                {/* Actions: Refresh & Close */}
                 <div className="d-flex align-items-center gap-2 flex-shrink-0">
                   <button
                     type="button"
@@ -319,12 +247,6 @@ export function RecordHistoryModal({
                     onClick={() => void refetch()}
                     disabled={isFetching}
                     className="rhm-header-btn"
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.5)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)")
-                    }
                   >
                     <i
                       className={`rhm-refresh-icon bi bi-arrow-clockwise ${isFetching ? "is-spinning" : ""}`}
@@ -337,12 +259,6 @@ export function RecordHistoryModal({
                     aria-label="Close"
                     onClick={onClose}
                     className="rhm-header-btn"
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.5)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "rgba(0, 0, 0, 0.35)")
-                    }
                   >
                     <i
                       className="rhm-close-icon bi bi-x-lg"
@@ -352,7 +268,6 @@ export function RecordHistoryModal({
                 </div>
               </div>
             </div>
-            {/* Modernized Minimalist ID Chips */}
             {(record.id || record.zoneId) && (
               <div
                 className="d-flex gap-2 px-2 pt-3 justify-content-between"
@@ -372,7 +287,6 @@ export function RecordHistoryModal({
                         key={key}
                         className="d-flex align-items-center gap-2 px-2.5 py-1.5 vds-inner-card"
                       >
-                        {/* Label + Monospace Value */}
                         <div
                           className="d-flex flex-row gap-2 min-w-0"
                           style={{ lineHeight: 1.15 }}
@@ -392,7 +306,6 @@ export function RecordHistoryModal({
                             title={String(value)}
                             style={{
                               fontSize: "0.75rem",
-                              // color: "#ffffff",
                               background: "transparent",
                               padding: 0,
                               whiteSpace: "nowrap",
@@ -405,7 +318,6 @@ export function RecordHistoryModal({
                           </code>
                         </div>
 
-                        {/* Copy Button */}
                         <button
                           type="button"
                           title={`Copy ${label}`}
@@ -442,7 +354,6 @@ export function RecordHistoryModal({
                 )}
               </div>
             )}
-            {/* ── Body ── */}
             <div className="modal-body p-2">
               {isError ? (
                 <div className="vds-empty-state py-5">
@@ -557,7 +468,6 @@ export function RecordHistoryModal({
                                 <td>
                                   <span
                                     className={`vds-status-text ${statusBadgeClass(status)}`}
-                                    // style={historyStatusStyle(status)}
                                   >
                                     {status || "—"}
                                   </span>
@@ -596,7 +506,6 @@ export function RecordHistoryModal({
           </div>
         </div>
       </div>
-      {/* ── INFO detail modal ── */}
       {selectedInfo && (
         <div
           className="modal d-block"
@@ -623,65 +532,64 @@ export function RecordHistoryModal({
                 border: "1px solid #dde4ef",
               }}
             >
-              {/* Detail modal header */}
-              <div
-                className="rhm-pop-header"
-                style={{
-                  padding: "14px 18px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span
-                  className={`vds-change-type-badge ${changeTypeBadgeClass(String(selectedInfo.changeType ?? ""))}`}
-                  style={{
-                    fontSize: "0.65rem",
-                    // ...changeTypeStyle(String(selectedInfo.changeType ?? "")),
-                  }}
-                >
-                  {String(selectedInfo.changeType ?? "—")}
-                </span>
-                {selectedInfo.recordSet?.type && (
-                  <span
-                    className="vds-type-badge"
-                    style={{ fontSize: "0.65rem", padding: "1px 6px" }}
-                  >
-                    {String(selectedInfo.recordSet.type)}
-                  </span>
-                )}
-                {selectedInfo.recordSet?.status && (
-                  <span
-                    className={`vds-status-badge ${statusBadgeClass(String(selectedInfo.recordSet.status))}`}
-                    style={{ fontSize: "0.62rem", padding: "1px 6px" }}
-                  >
-                    {String(selectedInfo.recordSet.status)}
-                  </span>
-                )}
-                {selectedInfo.recordSet?.ttl != null && (
-                  <span
-                    style={{
-                      fontSize: "0.65rem",
-                      color: "#64748b",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    TTL&nbsp;{selectedInfo.recordSet.ttl}s
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="rhm-header-btn rhm-header-btn--info"
-                  onClick={handleInfoClose}
-                  aria-label="Close"
-                  title="Close"
-                  style={{ marginLeft: "auto", backgroundColor: "#352f2f" }}
-                >
-                  <i className="bi bi-x-lg rhm-close-icon" />
-                </button>
+              <div className="rhm-header vds-dark-modal-header">
+                <div className="d-flex align-items-center justify-content-between gap-3 min-h-100">
+                  <div className="d-flex align-items-center gap-3 min-w-0">
+                    <div className="min-w-0">
+                      <div className="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                        <span
+                          className={`vds-change-type-badge ${changeTypeBadgeClass(String(selectedInfo.changeType ?? ""))}`}
+                          style={{
+                            fontSize: "0.65rem",
+                          }}
+                        >
+                          {String(selectedInfo.changeType ?? "—")}
+                        </span>
+                        {selectedInfo.recordSet?.type && (
+                          <span className="vds-dark-modal-badge badge-type">
+                            {String(selectedInfo.recordSet.type)}
+                          </span>
+                        )}
+                        {selectedInfo.recordSet?.status && (
+                          <span
+                            className={`vds-status-badge ${statusBadgeClass(String(selectedInfo.recordSet.status))}`}
+                            style={{ fontSize: "0.62rem", padding: "1px 6px" }}
+                          >
+                            {String(selectedInfo.recordSet.status)}
+                          </span>
+                        )}
+                        {selectedInfo.recordSet?.ttl != null && (
+                          <span
+                            style={{
+                              fontSize: "0.65rem",
+                              color: "#64748b",
+                              letterSpacing: "0.02em",
+                            }}
+                          >
+                            TTL&nbsp;{selectedInfo.recordSet.ttl}s
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      title="Close"
+                      onClick={handleInfoClose}
+                      className="rhm-header-btn"
+                    >
+                      <i
+                        className="rhm-close-icon bi bi-x-lg"
+                        style={{ fontSize: "0.85rem" }}
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Change metadata: IDs, zone, FQDN */}
               {(() => {
                 const zoneName =
                   selectedInfo.zone?.name ?? selectedInfo.recordSet?.zoneName;
@@ -744,7 +652,6 @@ export function RecordHistoryModal({
                 const oldRs = selectedInfo.updates as any;
                 const newRs = selectedInfo.recordSet;
 
-                // Inline record detail renderer
                 const RsDetail = ({
                   rs,
                   variant,
@@ -873,7 +780,6 @@ export function RecordHistoryModal({
                 );
               })()}
 
-              {/* Batch change IDs — shown when this change was part of a batch */}
               {(() => {
                 const ids: string[] = selectedInfo.singleBatchChangeIds ?? [];
                 if (!ids.length) return null;
@@ -927,7 +833,6 @@ export function RecordHistoryModal({
                 );
               })()}
 
-              {/* System message */}
               {selectedInfo.systemMessage && (
                 <div className="rhm-pop-section rhm-pop-section--msg">
                   <div className="rhm-pop-label rhm-pop-label--msg">

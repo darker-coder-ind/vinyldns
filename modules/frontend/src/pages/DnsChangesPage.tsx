@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DnsChangesTable } from "../components/dnsChanges/DnsChangesTable";
+import { CancelDnsChangeModal } from "../components/modals/CancelDnsChangeModal";
 import { PaginatedSection } from "../components/common/Pagination";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { TimeFilterDropdown } from "../components/common/TimeFilterDropdown";
@@ -26,7 +27,6 @@ import { useDnsChanges } from "../hooks/useDnsChanges";
 import { useProfile } from "../contexts/ProfileContext";
 import { useAlerts } from "../contexts/AlertContext";
 import { dnsChangeService } from "../services/dnsChangeService";
-import { formatDateTime } from "../utils/dateUtils";
 import type { BatchChangeCount, DnsChangeSummary } from "../types/dnsChange";
 import type { PagingState } from "../types/common";
 
@@ -236,7 +236,7 @@ export function DnsChangesPage() {
             title="Refresh"
             onClick={() => void refetch()}
           >
-            <i className="bi bi-arrow-clockwise"/>
+            <i className="bi bi-arrow-clockwise" />
           </button>
         </div>
       </div>
@@ -588,77 +588,14 @@ export function DnsChangesPage() {
 
       {/* Extracted Cancel Modal */}
       {cancelTarget && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="list-cancel-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setCancelTarget(null);
-          }}
-          className="vds-cancel-modal-overlay"
-        >
-          <div className="vds-cancel-modal-container">
-            {/* Header */}
-            <div className="vds-cancel-modal-header">
-              <span className="vds-cancel-modal-icon-wrap">
-                <i className="bi bi-exclamation-triangle-fill" />
-              </span>
-              <div style={{ flex: 1 }}>
-                <h6 id="list-cancel-modal-title" className="vds-cancel-modal-title">
-                  Cancel DNS Change
-                </h6>
-                <div className="vds-cancel-modal-subtitle">
-                  This action cannot be undone
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCancelTarget(null)}
-                aria-label="Close"
-                className="vds-cancel-modal-close-btn"
-              >
-                <i className="bi bi-x-lg" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="vds-cancel-modal-body">
-              Are you sure you want to cancel this DNS Change?
-              <div className="vds-cancel-modal-info-box">
-                <div className="vds-cancel-modal-info-id">
-                  {cancelTarget.id}
-                </div>
-                <div className="vds-cancel-modal-info-text">
-                  Submitted {formatDateTime(cancelTarget.createdTimestamp)}
-                </div>
-                {cancelTarget.comments && (
-                  <div className="vds-cancel-modal-info-text vds-cancel-modal-info-text--sm">
-                    {cancelTarget.comments}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="vds-cancel-modal-footer">
-              <button
-                type="button"
-                onClick={() => setCancelTarget(null)}
-                className="vds-cancel-modal-btn-secondary"
-              >
-                Keep DNS Change
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmCancel}
-                className="vds-cancel-modal-btn-danger"
-              >
-                <i className="bi bi-x-circle-fill" />
-                Cancel DNS Change
-              </button>
-            </div>
-          </div>
-        </div>
+        <CancelDnsChangeModal
+          isOpen={Boolean(cancelTarget)}
+          changeId={cancelTarget.id}
+          submittedAt={cancelTarget.createdTimestamp}
+          comments={cancelTarget.comments}
+          onClose={() => setCancelTarget(null)}
+          onConfirm={handleConfirmCancel}
+        />
       )}
     </div>
   );

@@ -28,6 +28,7 @@ import type {
   SingleChange,
 } from "../../types/dnsChange";
 import { groupsService } from "../../services/groupsService";
+import { DiscardChangesModal } from "../modals/DiscardChangesModal";
 
 /** Union of all possible DNS record data shapes across supported record types. */
 interface RecordData {
@@ -2482,136 +2483,18 @@ export function DnsChangeForm({
       )}
 
       {/* ── Cancel confirmation modal ── */}
-      {showCancelConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cancel-confirm-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowCancelConfirm(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15,23,42,0.65)",
-            backdropFilter: "blur(3px)",
-            zIndex: 1090,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1.5rem",
-          }}
-        >
-          <div
-            style={{
-              background: isDark ? "#161618" : "#ffffff",
-              border: `1px solid ${isDark ? "#2a2a2c" : "#e8ecf0"}`,
-              borderRadius: "0.85rem",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-              width: "min(420px, 100%)",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.85rem",
-                padding: "1rem 1.25rem",
-                borderBottom: `1px solid ${isDark ? "#2a2a2c" : "#e8ecf0"}`,
-              }}
-            >
-              <span
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  background: isDark ? "#3f1d1d" : "#fef2f2",
-                  color: "#dc2626",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1rem",
-                  flexShrink: 0,
-                }}
-              >
-                <i className="bi bi-exclamation-triangle-fill" />
-              </span>
-              <h6
-                id="cancel-confirm-title"
-                style={{
-                  margin: 0,
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  color: isDark ? "#ffffff" : "#0d1b3e",
-                }}
-              >
-                Discard batch change?
-              </h6>
-            </div>
-            <div style={{ padding: "1rem 1.25rem" }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "0.88rem",
-                  color: isDark ? "#94a3b8" : "#475569",
-                }}
-              >
-                All changes entered so far will be lost. This action cannot be
-                undone.
-              </p>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "0.5rem",
-                padding: "0.75rem 1.25rem",
-                borderTop: `1px solid ${isDark ? "#2a2a2c" : "#e8ecf0"}`,
-                background: isDark ? "#161618" : "#f8fafd",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setShowCancelConfirm(false)}
-                style={{
-                  padding: "0.45rem 1rem",
-                  background: "transparent",
-                  border: `1px solid ${isDark ? "#2a2a2c" : "#d4dae3"}`,
-                  color: isDark ? "#94a3b8" : "#5a6a85",
-                  borderRadius: "0.45rem",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: 500,
-                }}
-              >
-                Keep editing
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCancelConfirm(false);
-                  onCancel();
-                }}
-                style={{
-                  padding: "0.45rem 1.1rem",
-                  background: "#dc2626",
-                  border: "none",
-                  color: "#fff",
-                  borderRadius: "0.45rem",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  boxShadow: "0 2px 8px rgba(220,38,38,0.3)",
-                }}
-              >
-                <i className="bi bi-trash3-fill me-1" />
-                Discard changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DiscardChangesModal
+        isOpen={showCancelConfirm}
+        title="Discard batch change?"
+        description="All changes entered so far will be lost. This action cannot be undone."
+        cancelLabel="Keep editing"
+        confirmLabel="Discard changes"
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false);
+          onCancel();
+        }}
+      />
     </FormProvider>
   );
 }
