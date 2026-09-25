@@ -1108,6 +1108,42 @@ class MySqlBatchChangeRepositoryIntegrationSpec
       count.scheduled shouldBe 0
     }
 
+    "count-by-status matches summary status counts on a mixed dataset" in {
+      def completeChange: BatchChange =
+        randomBatchChangeWithList(
+          randomBatchChange().changes.map(_.complete("recordChangeId", "recordSetId"))
+        )
+      val cancelledBatchChange =
+        randomBatchChange().copy(approvalStatus = BatchChangeApprovalStatus.Cancelled)
+
+      val f =
+        for {
+          _ <- repo.save(change_one) // PendingReview
+          _ <- repo.save(completeChange) // Complete
+          _ <- repo.save(change_three) // Failed
+          _ <- repo.save(change_four) // PartialFailure
+          _ <- repo.save(change_five) // Rejected
+          _ <- repo.save(otherUserBatchChange) // PendingProcessing
+          _ <- repo.save(cancelledBatchChange) // Cancelled
+          count <- repo.getBatchChangeCount(None)
+          summaries <- repo.getBatchChangeSummaries(None)
+        } yield (count, summaries)
+
+      val (count, summaries) = f.unsafeRunSync()
+      val summaryCounts = summaries.batchChanges.groupBy(_.status).map { case (status, entries) => status -> entries.size }
+      val expectedCounts = Map(
+        BatchChangeStatus.Complete -> count.complete,
+        BatchChangeStatus.Failed -> count.failed,
+        BatchChangeStatus.PartialFailure -> count.partialFailure,
+        BatchChangeStatus.Rejected -> count.rejected,
+        BatchChangeStatus.Cancelled -> count.cancelled,
+        BatchChangeStatus.PendingReview -> count.pendingReview,
+        BatchChangeStatus.PendingProcessing -> count.pendingProcessing
+      ).filter(_._2 > 0)
+
+      summaryCounts shouldBe expectedCounts
+    }
+
     "scope the count to a single user when a userId is given" in {
       def completeChange: BatchChange =
         randomBatchChangeWithList(

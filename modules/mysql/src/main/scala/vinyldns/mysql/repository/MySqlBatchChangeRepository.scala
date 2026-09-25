@@ -361,20 +361,22 @@ class MySqlBatchChangeRepository
                   res.timestampOpt("scheduled_time").map(st => st.toInstant)
                 val cancelledTimestamp =
                   res.timestampOpt("cancelled_timestamp").map(st => st.toInstant)
+                val status = res.stringOpt("batch_status").flatMap(BatchChangeStatus.find).getOrElse(
+                  BatchChangeStatus.calculateBatchStatus(
+                    approvalStatus,
+                    pending > 0,
+                    failed > 0,
+                    complete > 0,
+                    schedTime.isDefined
+                  )
+                )
                 BatchChangeSummary(
                   res.string("user_id"),
                   res.string("user_name"),
                   Option(res.string("comments")),
                   res.timestamp("created_time").toInstant,
                   pending + failed + complete + cancelled,
-                  BatchChangeStatus
-                    .calculateBatchStatus(
-                      approvalStatus,
-                      pending > 0,
-                      failed > 0,
-                      complete > 0,
-                      schedTime.isDefined
-                    ),
+                  status,
                   Option(res.string("owner_group_id")),
                   res.string("id"),
                   None,
