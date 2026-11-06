@@ -14,6 +14,7 @@
 **/_template
 img/
 **/.env
+**/local-dev-signing.conf
 modules/portal/node_modules/
 **/sootOutput/
 **/node_modules/

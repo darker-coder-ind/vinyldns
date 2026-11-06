@@ -58,7 +58,12 @@ lazy val apiSettings = Seq(
   javaOptions in reStart ++= Seq(
     "-Dlog4j.configurationFile=test/log4j2.xml",
     s"""-Dvinyldns.base-version=${(version in ThisBuild).value}"""
-  ),
+  ) ++ {
+    val localConfig =
+      (LocalRootProject / baseDirectory).value / "test/api/functional/local-dev-signing.conf"
+    if (localConfig.isFile) Seq(s"-Dconfig.file=${localConfig.getAbsolutePath}")
+    else Seq.empty
+  },
   coverageExcludedPackages := "Boot.*"
 )
 

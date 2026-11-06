@@ -181,6 +181,15 @@ Once the prerequisites are running, you can start up sbt by running `sbt` from t
 - To stop the VinylDNS server, run `reStop` from the api project
 - To stop the dependent Docker containers: `utils/clean-vinyldns-containers.sh`
 
+Queue signing requires an active key ID, an audience, and a dedicated 64-character hexadecimal key.
+For local development, `reStart` loads `test/api/functional/local-dev-signing.conf` if it exists.
+Keep this file excluded from version control. It should include `application.conf`, configure
+`vinyldns.queue.signing` with a locally generated key (for example, using `openssl rand -hex 32`),
+and pin the MySQL connection and migration URLs to `localhost:19002` without environment-variable
+overrides. Add `useMysqlMetadata=true` to both JDBC URLs for compatibility with the local MariaDB
+container and Flyway. Run `reload` in an existing sbt session after creating this file or updating
+the build settings. Never use a production signing key or a snapshot database for local testing.
+
 Zone updates validated by the API and authenticated by the queue consumer persist the requested
 ACL, admin group, and sharing changes, including permission revocations. Record operations and zone
 deletion use repository-loaded zone configuration; they must not use message-supplied zone settings.
@@ -265,6 +274,25 @@ can work with the `Makefile` in `test/api/functional`:
 make -C test/api/functional build run
 ```
 
+To rebuild the API from the current checkout and run against fresh container-local MySQL, SQS,
+and DNS services (without connecting to the snapshot database), use:
+
+```shell
+make -C test/api/functional all-local
+```
+
+This target does not publish host ports, so existing local dependency containers can remain running.
+The runner checks HTTP health before starting pytest. `API_TIMEOUT` defaults to `120s` for each
+startup phase, and `TEST_TIMEOUT` defaults to `10m` for the test run; a timeout exits nonzero.
+The default JVM settings limit processor count, use serial GC, and restrict JIT compilation
+for amd64 emulation on Apple Silicon. Override `JAVA_TOOL_OPTIONS` when different JVM settings
+are required.
+
+```shell
+# Stop early after failures, or adjust the test runtime limit.
+make -C test/api/functional all-local WITH_ARGS="--maxfail=10" TEST_TIMEOUT=10m
+```
+
 During iterative test development, you can use `make run-local` which will bind-mount the current functional tests in
 the container, allowing for easier test development.
 
@@ -273,7 +301,7 @@ From there you can run tests with the `/functional_test/run.sh` command. This al
 test execution process as well as easier inspection of logs.
 
 You can run a specific test by name by running `make build` and `make run -- -k <name of test function>`. Any arguments after
-`make run --` will be passed to the test runner [`test/api/functional/run.sh`](test/api/functional/run.sh).
+`make run --` will be passed to the test runner [`modules/api/src/test/functional/run.sh`](modules/api/src/test/functional/run.sh).
 
 Finally, you can execute `make run-deps-bg` to all of the dependencies for the functional test, but not run the tests.
 This is useful if, for example, you want to use an interactive debugger on your local machine, but host all of the

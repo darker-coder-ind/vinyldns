@@ -29,5 +29,6 @@ RUN mkdir -p /localstack && touch /localstack/localstack.log /opt/vinyldns/vinyl
 
 # Copy over the functional tests
 COPY  modules/api/src/test/functional /functional_test
+COPY test/api/functional/start-tests.sh /start-tests.sh
 
-ENTRYPOINT ["/bin/bash", "-c", "/initialize.sh bind localstack vinyldns-api mysql && { /functional_test/run.sh \"$@\" || { cat /opt/vinyldns/vinyldns.log && exit 1; }; }"]
+ENTRYPOINT ["/bin/bash", "/start-tests.sh"]
